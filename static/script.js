@@ -7,11 +7,13 @@
     waiting_audio = false // Indica se c'e' una richiesta in corso nella schermata audio
     translate = false // Indica se siamo nella schermata di traduzione
     side_bar = false // Indica se la side bar e' attiva
-    audio = true // Indica se siamo nella schermata di audio
+    audio = false // Indica se siamo nella schermata di audio
     cluster = true // Indica se siamo nella schermata di clustering
     side_bar_id = "chat_sidebar" // Memorizza l'id dell'ultima sidebar attiva
     lang_option = false // Indica se il menu delle lingue e' visualizzato o meno
-    audio_badge = false
+    audio_badge = false // Visualizzazzione del badge di notifica
+    form_text_val = "" // Contiene il contenuto della richiesta
+
 
     //Verifica e regola la grandezza della interfaccia
 function check_sidebar(){
@@ -35,6 +37,7 @@ function show_elements(element) {
             "placeholder": "Inserisci il tuo messaggio o un link ad una pagina web",
             "formTransform": 'none',
             "contextButtonTranform": 'none',
+
         },
         "translate_sidebar_li": {
             "divId": "translate_sidebar",
@@ -94,6 +97,9 @@ function show_elements(element) {
         lang_menu.style.transform = "translateY(400%)";
     } else {
         if (side_bar_id === settings.divId) {
+           if(settings.divId == "translate_sidebar"){
+               document.getElementById('lang_menu_body').style.transform = "none"
+           }
             myDiv.style.left = "-20%";
             side_bar = false;
         } else {
@@ -154,17 +160,21 @@ function sendForm() {
             return
         }
 
-        showLoadingAnimation()
+
 
         var formData = new FormData($("#cont_form")[0]);
         formData.append("translate", translate);
 
 
         /* Reset dei valori del form*/
+        form_text_val = $("#cont_form_text").val()
+        showLoadingAnimation()
+
         $("#cont_form_text").val("")
+
         document.getElementById('cont_form_text').style.height = 'auto';
         document.getElementById('cont_form_input_file').value = null;    
-        
+
 
         if (translate){
                 waiting_chat_traslate = true
@@ -178,13 +188,12 @@ function sendForm() {
             processData: false,
             contentType: false,
             success:function(response) {
-                     update_elements(response)
-                if (waiting_chat) waiting_chat = false
-                if (waiting_chat_traslate) waiting_chat_traslate = false
-
-
+                    update_elements(response)
+                    if (waiting_chat) waiting_chat = false
+                    if (waiting_chat_traslate) waiting_chat_traslate = false
                 },
             error: function() {
+                    waiting_alert()
                     if(waiting_chat) waiting_chat = false
                     if(waiting_chat_traslate) waiting_chat_traslate = false
                 }
@@ -297,6 +306,7 @@ function checkFileSelected() {
                 }, 
                 error: function(error) {
                     waiting_chat = false;
+                    waiting_alert()
                     alert(error.responseJSON.error);
                 }
             });
@@ -356,8 +366,8 @@ function update_elements(response){
 
         $("#cont_chat").empty();
         $("#cont_contest_file").empty();
-        
-       
+
+
         //Information
         $("#chat_information_Message").text(response.information.Num_Message)
         $("#chat_information_Token").text(response.information.Num_Token)
@@ -580,15 +590,16 @@ function translate_file(type) {
 }
 
     //Lang Search Selection
-function filterLanguages() {
-        const input = document.getElementById('languageSearch').value.toLowerCase();
-        const languageList = document.getElementById('languageList');
+function filterLanguages(id) {
+        const input = document.getElementById('languageSearch' + id).value.toLowerCase();
+        const languageList = document.getElementById('languageList' + id);
         const languages = languageList.getElementsByTagName('li');
 
         for (let i = 0; i < languages.length; i++) {
             var language = languages[i].textContent.toLowerCase();
             if (language.includes(input)) {
                 languages[i].style.display = '';
+                console.log(languages[i]);
             } else {
                 languages[i].style.display = 'none';
             }
@@ -686,27 +697,18 @@ function showLoadingAnimation(){
     let element = $("#cont_chat").children();
     $("#cont_chat").empty()
     if(!translate && !audio){
-        let userText = $("<div>").attr("class", "row").attr("id", "cont_user_chat").html("<pre> <span class='text-primary'> -> | </span>" + $("#cont_form_text").val() + "</pre>");
+        let userText = $("<div>").attr("class", "row").attr("id", "cont_user_chat_tmp").html("<pre> <span class='text-primary'> -> | </span>" + form_text_val + "</pre>");
         $("#cont_chat").append(userText);
         }
 
-    let aiText = $("<div>").attr("class", "row bg-light-subtle rounded-3 p-3 shadow mt-2").attr("id", "cont_ai_chat").html("<pre id='span_tmp'> " + " </pre>");
+    let aiText = $("<div>").attr("class", "row bg-light-subtle rounded-3 p-3 shadow mt-2").attr("id", "cont_ai_chat_tmp").html("<pre id='span_tmp'> " + " </pre>");
 
     $("#cont_chat").append(aiText);
     $("#cont_chat").append(element);
 }
 
-function get_status_waiting(){
-            $.ajax({
-            type: "POST",
-            url: "/get_status",
-            success:function(response) {
-                waiting_chat = response.status_chat // Indica se c'e' una richiesta in corso nella schermata chat
-                waiting_chat_traslate = response.status_trans  // Indica se c'e' una richiesta in corso nella schermata translate
-                waiting_audio = response.status_audio
-            },
-
-        });
-
-}
-
+window.onbeforeunload = function(event) {
+    if(waiting_chat || waiting_audio || waiting_chat_traslate){
+        event.returnValue = 'Stai lasciando la pagina prima che una delle tue richieste sia stata completata.';
+    }
+};

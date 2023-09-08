@@ -59,7 +59,7 @@ pre code {
   
 }
 
-#cont_ai_chat {
+#cont_ai_chat, #cont_ai_chat_tmp{
     margin-left: .25rem;
     width: calc(100% - .5rem) 
 }
@@ -106,7 +106,7 @@ pre code {
     font-size: 1.5rem;
 }
 
-#cont_user_chat {
+#cont_user_chat , #cont_user_chat_tmp{
     margin-left: .25rem;
     width: calc(100% - .5rem) ;
     text-align: left;
@@ -115,7 +115,7 @@ pre code {
     margin-top: 15px;
 }
 #cont_form{
-
+    transition:  transform  0.5s ease;
 }
 #button_context{
     transition: transform  0.5s ease;
@@ -136,7 +136,7 @@ pre code {
     max-height: 15vw;
     border: 0px;
     z-index: 1;
-    transition:  all  0.5s ease;
+
 }
 
 #cont_form_button_menu{
