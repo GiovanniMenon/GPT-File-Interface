@@ -127,7 +127,7 @@
     </div>
 
     <div class="d-flex flex-column position-absolute p-1 h-100 bg-body-tertiary shadow-lg align-items-center my-hidden" id="translate_sidebar">
-            <div class="row w-100 text-center p-2 my-auto">
+            <div class="row w-100 text-center p-2 mt-auto">
                         <p class="fs-4 fw-bold"> Traduci un File</p>
                         <hr>
                         <input type="file" class="form-control form-control-md pe-0 mb-3 mt-4" id="translate_file_input" >
@@ -136,7 +136,14 @@
                         <div class="form-text fst-italic" id="basic-addon4">.docx , .pdf , .txt</div>
             </div>
             <hr>
+              <div class="dropup-center dropup bottom-0 mb-auto" id="lang_menu">
+                                    <button id="current_lang" class="btn btn-secondary dropdown-toggle btn-md custom-btn current_lang" type="button" data-bs-toggle="dropdown" aria-expanded="false">Testo</button>
 
+                              <ul class="dropdown-menu">
+                                 <li><button class="dropdown-item" value="Document" title="Documento" onclick="change_translate_opt(this,'Document')">Documento</button></li>
+                                <li><button class="dropdown-item" value="Text" title="File di Testo" onclick="change_translate_opt(this,'Text')">Testo</button></li>
+                              </ul>
+            </div>
             <div class="dropup-center dropup bottom-0 mb-5" id="lang_menu">
                 <button id="current_lang" class="btn btn-secondary dropdown-toggle btn-md custom-btn current_lang" type="button" data-bs-toggle="dropdown" aria-expanded="false">{% if lang %}{{lang}}{% endif %}</button>
                 <ul class="dropdown-menu">
