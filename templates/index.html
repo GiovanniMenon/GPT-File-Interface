@@ -20,7 +20,7 @@
         <title>Nome Progetto</title>
 
     </head>
-<body onload="get_status_waiting()">
+<body>
 
 
     <div class="position-absolute end-0 me-5">
@@ -36,11 +36,11 @@
                 <button id="current_lang" class="btn btn-secondary dropdown-toggle current_lang" type="button" data-bs-toggle="dropdown" aria-expanded="false">{% if lang %}{{lang}}{% endif %}</button>
                 <ul class="dropdown-menu">
                         <li class="p-2">
-                            <input type="text" id="languageSearch" class="form-control form-control-sm" placeholder="Cerca lingua" oninput="filterLanguages()">
+                            <input type="text" id="languageSearch1" class="form-control form-control-sm" placeholder="Cerca lingua" oninput="filterLanguages(1)">
                         </li>
                         <hr>
                         <div class="language-list-scrollable overflow-auto">
-                            <div class="h-100 " id="languageList">
+                            <div class="h-100 " id="languageList1">
                                 <li><button class="dropdown-item" value="Cinese" title="Cinese" onclick="change_language(this,'translate')">Cinese</button></li>
                                 <li><button class="dropdown-item" value="Coreano" title="Coreano" onclick="change_language(this,'translate')">Coreano</button></li>
                                 <li><button class="dropdown-item" value="Danese" title="Danese" onclick="change_language(this,'translate')">Danese</button></li>
@@ -141,11 +141,11 @@
                 <button id="current_lang" class="btn btn-secondary dropdown-toggle btn-md custom-btn current_lang" type="button" data-bs-toggle="dropdown" aria-expanded="false">{% if lang %}{{lang}}{% endif %}</button>
                 <ul class="dropdown-menu">
                         <li class="p-2">
-                            <input type="text" id="languageSearch" class="form-control form-control-sm" placeholder="Cerca lingua" oninput="filterLanguages()">
+                            <input type="text" id="languageSearch2" class="form-control form-control-sm" placeholder="Cerca lingua" oninput="filterLanguages(2)">
                         </li>
                         <hr>
                         <div class="language-list-scrollable overflow-auto">
-                            <div class="h-100 " id="languageList">
+                            <div class="h-100 " id="languageList2">
                                 <li><button class="dropdown-item" value="Cinese" title="Cinese" onclick="change_language(this,'translate')">Cinese</button></li>
                                 <li><button class="dropdown-item" value="Coreano" title="Coreano" onclick="change_language(this,'translate')">Coreano</button></li>
                                 <li><button class="dropdown-item" value="Danese" title="Danese" onclick="change_language(this,'translate')">Danese</button></li>
@@ -193,11 +193,11 @@
                 <button id="current_audiolang" class="btn btn-primary btn-md custom-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Inglese</button>
                 <ul class="dropdown-menu">
                         <li class="p-2">
-                            <input type="text" id="languageSearch" class="form-control form-control-sm" placeholder="Cerca lingua" oninput="filterLanguages()">
+                            <input type="text" id="languageSearch3" class="form-control form-control-sm" placeholder="Cerca lingua" oninput="filterLanguages(3)">
                         </li>
                         <hr>
                         <div class="language-list-scrollable overflow-auto">
-                            <div class="h-100 " id="languageList">
+                            <div class="h-100 " id="languageList3">
                                 <li><button class="dropdown-item" value="Cinese" title="Cinese" onclick="change_language(this,'audio')">Cinese</button></li>
                                 <li><button class="dropdown-item" value="Coreano" title="Coreano" onclick="change_language(this,'audio')">Coreano</button></li>
                                 <li><button class="dropdown-item" value="Danese" title="Danese" onclick="change_language(this,'audio')">Danese</button></li>
@@ -240,34 +240,35 @@
     <div class="d-flex flex-column flex-shrink-0 bg-body-tertiary shadow-lg position-absolute h-100" id="cont_sidebar">
         <ul class="nav nav-pills nav-flush flex-column mb-auto text-center mt-auto">
             <li class="nav-item" onclick="show_elements(this)" id="chat_sidebar_li">
-              <a  class="nav-link active py-3 rounded-2 mt-2"  data-bs-placement="bottom" aria-label="Chat" data-bs-original-title="Chat">
+              <a  class="nav-link active px-0 py-3 rounded-2 mt-2"  data-bs-placement="bottom" aria-label="Chat" data-bs-original-title="Chat">
                 <i class="fa-solid fa-message fs-5"></i>
                 <br>
-                Chat
+                <p class="fs-6 custom-fs p-0 m-0">Chat</p>
             </a>
             </li>
             <li onclick="show_elements(this)" class="nav-item" id="translate_sidebar_li">
-              <a  class="nav-link py-3 rounded-2 mt-2 link-body-emphasis"  data-bs-placement="bottom" aria-label="Audio" data-bs-original-title="Audio">
+              <a  class="nav-link py-3 px-0 rounded-2 mt-2 link-body-emphasis"  data-bs-placement="bottom" aria-label="Audio" data-bs-original-title="Audio">
                 <i class="fa-solid fa-language"></i>
                 <br>
-                Translate
+                <p class="fs-6 custom-fs p-0 m-0">Translate</p>
             </a>
             </li>
             <li onclick="show_elements(this)" class="nav-item" id="audio_sidebar_li">
-              <a  class="nav-link py-3 rounded-2 mt-2 link-body-emphasis"  data-bs-placement="bottom" aria-label="Audio" data-bs-original-title="Audio">
+              <a  class="nav-link py-3 px-0 rounded-2 mt-2 link-body-emphasis"  data-bs-placement="bottom" aria-label="Audio" data-bs-original-title="Audio">
                 <i class="fa-solid fa-headset fs-5 position-relative">
                     <span class=" position-absolute top-0 start-100 translate-middle bg-danger border border-light rounded-circle" id="audio_badge"></span>
                 </i>
                 <br>
-                Audio
+                  <p class="fs-6 custom-fs p-0 m-0">Audio</p>
+
 
             </a>
             </li>
             <li onclick="show_elements(this)" class="nav-item" id="cluster_sidebar_li">
-              <a  class="nav-link py-3 rounded-2 mt-2 link-body-emphasis "  data-bs-placement="bottom" aria-label="Clustering" data-bs-original-title="Cluster">
+              <a  class="nav-link px-0  py-3 rounded-2 mt-2 link-body-emphasis "  data-bs-placement="bottom" aria-label="Clustering" data-bs-original-title="Cluster">
                <i class="fa-brands fa-connectdevelop fs-5"></i>
                 <br>
-                <span>Cluster</span>
+                <p class="fs-6 custom-fs p-0 m-0">Audio</p>
              </a>
             </li>
 
