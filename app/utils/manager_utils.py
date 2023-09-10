@@ -5,32 +5,34 @@ import functools
 import os
 
 from flask import session
-from app.utils.file.file_builder import file_chat_builder, file_translate_builder, file_audio_builder
-from app.utils.file.file_utils import extract_file_content, is_audio, path, performance, remove_selected_file, \
-    save_file, compress_audio, create_path
+from app.utils.file.file_builder import file_chat_builder, file_translate_builder, file_audio_builder, \
+    document_translate_builder
+from app.utils.file.file_utils import extract_file_content, is_audio, path_file, performance, remove_selected_file, \
+    save_file, compress_audio, split_audio
 from app.utils.message_utils import num_tokens_from_messages, split_text_into_sections
 from app.utils.openai_utils import translate_text_call, transcribe
 from werkzeug.utils import secure_filename
 
 
-def file_manager(file, scope="chat", audio_opt="", audio_lang=""):
-    path_ = path(file)
+def file_manager(file, scope="chat", opt="", audio_lang=""):
+    path_ = path_file(file)
     filename = file.filename
     save_file(file, path_)
 
     if scope == 'audio':
-        if os.path.getsize(path_) / (1024 * 1024)>25 or not (is_audio(filename)):
-            path_ = compress_audio(path_)
-        text = transcribe(path_)
+        text = audio_manager(path_)
     else:
         text = extract_file_content(path_, secure_filename(filename))
+
     if scope == "chat":
         file_chat_builder(text, filename)
     elif scope == "translate":
-        file_translate_builder(text)
+        if opt == 'document':
+            document_translate_builder(path_)
+        else:
+            file_translate_builder(text)
     elif scope == "audio":
-        file_audio_builder(text, audio_opt, audio_lang)
-
+        file_audio_builder(text, opt, audio_lang)
     remove_selected_file(path_)
 
 
@@ -48,3 +50,16 @@ def translate_manager(text, lang, filename="Utente"):
     else:
         return translate_text_call(session['LANGUAGE_OPTION_CHOOSE'], text)
 
+
+def audio_manager(path_, filename="Utente"):
+    if os.path.getsize(path_) / (1024 * 1024) > 25 or not (is_audio(filename)):
+        segments = split_audio(compress_audio(path_))
+        start_time = time.time()
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            results = executor.map(transcribe, segments)
+            transcribe_text = ''.join(results)
+            end_time = time.time()
+            performance(filename, "Trascrizione", end_time - start_time)
+            return transcribe_text
+    else:
+        return transcribe(path_)
