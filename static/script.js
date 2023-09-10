@@ -531,6 +531,14 @@ function change_language(element,opt) {
 
 }
 
+
+function change_translate_opt(element,opt) {
+      let button;
+      button = document.getElementById("current_file_opt")
+      button.textContent = element.value + " "
+
+}
+
 function translate_file(type) {
 
     if(waiting_chat || waiting_chat_traslate){
@@ -538,7 +546,7 @@ function translate_file(type) {
         return
     }
 
-    var input
+    let input
     if(type === "text"){
         input = document.getElementById('translate_file_input');
         const fileExtension = input.files[0].name.split('.').pop().toLowerCase();
@@ -564,6 +572,7 @@ function translate_file(type) {
 
     var formData = new FormData();
     formData.append("file", input.files[0]);
+    formData.append("opt", $('#current_file_opt').text().trim());
 
 
    showLoadingAnimation()
@@ -627,8 +636,8 @@ function transcribe_audio(){
         return
     }
 
-    var input = document.getElementById('transcribe_audio_input');
-    var selectedOption = $('#current_audioOption').text().trim()
+    let input = document.getElementById('transcribe_audio_input');
+    let selectedOption = $('#current_audioOption').text().trim()
 
     const fileExtension = input.files[0].name.split('.').pop().toLowerCase();
 
@@ -641,11 +650,11 @@ function transcribe_audio(){
             return
         }
 
-    var formData = new FormData();
+    let formData = new FormData();
     formData.append("file", input.files[0]);
     formData.append("transcriptionOption", selectedOption);
     if(selectedOption === "Traduzione"){
-        var selectedLanguage = $("#current_audiolang").text().trim()
+        let selectedLanguage = $("#current_audiolang").text().trim()
         formData.append("translationLanguage", selectedLanguage);
     }
 
@@ -659,8 +668,24 @@ function transcribe_audio(){
             url: "/transcribe_audio", 
             data : formData,
             processData: false,  
-            contentType: false, 
+            contentType: false,
+            xhr: function() {
+                    const xhr = new window.XMLHttpRequest();
+                    xhr.upload.addEventListener("progress", function(event) {
+                        if (event.lengthComputable) {
+                            $('#progress_bar_State').text("Caricamento");
+                            const percentComplete = (event.loaded / event.total) * 100;
+                            $('#progress_bar_audio').css("width" , percentComplete + '%')
+                            if (percentComplete >= 100) {
+                                $('#progress_bar_State').text("Elaborazione della Richiesta ~3min");
+                            }
+                        }
+                    }, false);
+                    return xhr;
+                },
             success:function(response) {
+                $('#progress_bar_State').text("Nessun Caricamento");
+                $('#progress_bar_audio').css("width" , 0 + '%')
                 update_elements(response)
                 waiting_audio = false
                 if(side_bar_id !== 'audio_sidebar'){
@@ -668,11 +693,12 @@ function transcribe_audio(){
                     let alertElement = document.getElementById('audio_badge');
                     alertElement.classList.add('visible');
                 }
-
-
             }, 
             error: function(error) {
-                waiting_audio = false;
+                waiting_audio= false;
+                waiting_alert()
+                $('#progress_bar_State').text("Nessun Caricamento");
+                $('#progress_bar_audio').css("width" , 0 + '%')
                 alert(error.responseJSON.error);
             }
         });
