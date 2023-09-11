@@ -41,7 +41,7 @@ def home():
     session["ID_USER"] = current_user.id
     session.modified = True
     session.setdefault('MODEL_API_OPTION_CHOOSE', 'gpt-3.5-turbo')
-    session.setdefault('LANGUAGE_OPTION_CHOOSE', 'Inglese')
+    session.setdefault('LANGUAGE_OPTION_CHOOSE', 'English')
 
     if 'INFORMATION' not in session:
         session['INFORMATION'] = {"Num_Message": 0, "Num_Token": 0}
@@ -234,7 +234,7 @@ def clear_elements():
 def clear_context():
     try:
 
-        file_path = "history/" + str(session["ID_USER"]) + "/log.json"
+        file_path = "log/" + str(session["ID_USER"]) + "/log.json"
         log_context_to_file(file_path, session['CONTEXT'])
         session['ELEMENTS_CHAT'].clear()
         session.modified = True
@@ -358,7 +358,7 @@ def translate_file_response():
         try:
             try:
                 file = request.files['file']
-                file_manager(file, "translate", "")
+                file_manager(file, "translate", request.form.get('opt'))
 
                 data = {
                     'section': "translate_sidebar",

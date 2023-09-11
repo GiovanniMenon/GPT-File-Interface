@@ -5,13 +5,16 @@ import functools
 import os
 
 from flask import session
-from app.utils.file.file_builder import file_chat_builder, file_translate_builder, file_audio_builder, \
-    document_translate_builder
-from app.utils.file.file_utils import extract_file_content, is_audio, path_file, performance, remove_selected_file, \
+
+from app.utils.document.document_builder import document_translate_builder
+from app.utils.file.file_builder import file_chat_builder, file_translate_builder, file_audio_builder
+from app.utils.file.file_utils import  is_audio, path_file, performance, remove_selected_file, \
     save_file, compress_audio, split_audio
 from app.utils.message_utils import num_tokens_from_messages, split_text_into_sections
 from app.utils.openai_utils import translate_text_call, transcribe
 from werkzeug.utils import secure_filename
+
+from app.utils.parser.parser import extract_file_content
 
 
 def file_manager(file, scope="chat", opt="", audio_lang=""):
