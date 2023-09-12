@@ -1,0 +1,254 @@
+body{
+    transition:  all  0.5s ease;
+    background-color: var(--bs-body-bg);
+    overflow: hidden;
+}
+
+
+::-webkit-scrollbar {
+    width: 0.5em;
+}
+::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+
+textarea:focus {
+    outline: 0;
+}
+
+pre {
+    white-space: pre-wrap;
+    word-break:normal;
+    margin-bottom: 0px !important;
+}
+
+a pre{
+    display: flex;
+    justify-content: space-between;
+}
+
+pre code {
+    border-radius: 5px;
+   
+    display: block;
+    padding: 15px;
+    background-color: var(--bs-secondary-bg-subtle);
+    
+    overflow: auto;
+
+}
+
+#cont {
+    top:1%;
+    height: 99%;
+    transition: all 0.3s ease-in-out;
+}
+
+#cont_chat {
+    
+    height: 92%;
+    border-radius: 9px;
+    overflow: auto;
+    padding: 10px;
+    padding-bottom: 30px;
+  
+}
+
+#cont_ai_chat, #cont_ai_chat_tmp{
+    margin-left: .25rem;
+    width: calc(100% - .5rem) 
+}
+
+
+
+#span_tmp::after {
+    content: "";
+    width: 8px;
+    height: 20px;
+    background: #0d6efd;
+    display: inline-block;
+    animation: blink 1.25s steps(2) infinite;
+}
+
+
+#cont_link_chat{
+    height: 100%;
+    width: calc(100% - 10px);
+    align-items: center;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: var(--bs-secondary-bg-subtle);
+       
+}
+
+#cont_ai_chat_file{
+    margin-right: 0.3vw;
+    width: 100%;
+    text-decoration: none;
+    
+    color: inherit;
+    padding: 10px;
+    
+    
+}
+#cont_ai_chat_file pre{
+    margin-bottom: 0px;
+    
+}
+
+
+#cont_ai_chat_file .fa-solid{
+    font-size: 1.5rem;
+}
+
+#cont_user_chat , #cont_user_chat_tmp{
+    margin-left: .25rem;
+    width: calc(100% - .5rem) ;
+    text-align: left;
+    justify-content: right;
+    padding:10px;
+    margin-top: 15px;
+}
+#cont_form{
+    transition:  transform  0.5s ease;
+}
+#button_context{
+    transition: transform  0.5s ease;
+}
+#cont_form_textarea_wrapper {
+    left: 17.5%;
+    width: 65%;
+    
+}
+
+#cont_form_text{
+    padding-right: 5rem !important;
+    border-radius: 10px;
+    resize: none;
+    bottom: 0%;
+    white-space: pre-wrap;
+    min-height: 3vw;
+    max-height: 15vw;
+    border: 0px;
+    z-index: 1;
+
+}
+
+#cont_form_button_menu{
+    height: 100%;
+    z-index: 3;
+
+}
+
+.cont_form_label_icon{
+    cursor: pointer;
+    position: relative;
+    height: fit-content;
+    width: fit-content;
+}
+
+
+
+
+#cont_sidebar{
+    width: 7rem;
+  
+}
+
+
+.my-hidden{
+    width: 16%;
+    left: -20%;
+    transition: all 0.3s ease-in-out;
+}
+
+
+
+#cont_sidebar .nav-item{
+    cursor: pointer;
+    word-break: break-all;
+    word-wrap: break-word;
+   }
+
+
+#cont_file{
+    width: 90%;
+}
+#cont_contest_file{
+    max-height:  200px;
+    
+}
+
+.language-list-scrollable {
+        max-height: 200px;
+    }
+
+#audio_lang_menu{
+    transform: translateX(-400%);
+    transition: transform  0.3s ease;
+}
+
+#lang_menu_body{
+    left: 9rem;
+    transform: translateY(400%);
+    transition: transform 0.5s ease;
+}
+
+#alert_waiting{
+    margin-bottom: 13vh;
+    margin-right: 0.5vw;
+    opacity: 0.95;
+    transform: translateX(200%);
+    transition: transform 0.5s ease;
+}
+#alert_waiting.visible {
+    transform: translateX(0);
+}
+
+#audio_badge{
+    padding: 0.35rem;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+#audio_badge.visible{
+    opacity: 1;
+}
+@keyframes blink {
+    0% {opacity: 0;}
+    100% {opacity: 1;}
+  }
+
+@media screen and (max-width: 1400px) {
+
+    .custom-btn.btn-md {
+        padding: 0.25rem 0.5rem; /* Modifica il padding per adattarsi a btn-sm */
+        font-size: 0.875rem;    /* Modifica la grandezza del font per adattarsi a btn-sm */
+      }
+    .form-control.form-control-md {
+        padding: 0.25rem 0.5rem; /* Modifica il padding per adattarsi a form-control-sm */
+        font-size: 0.875rem;    /* Modifica la grandezza del font per adattarsi a form-control-sm */
+      }
+
+    .custom-fs.fs-6{
+        font-size: 0.775rem !important; /* Modifica la grandezza del font per adattarsi a fs-5 */
+      }
+
+    #cont_form_textarea_wrapper {
+    left: 15%;
+    width: 70%;
+    }
+
+    #cont_contest_file{
+        max-height:  100px;
+    }
+    #alert_waiting{
+    margin-bottom: 20vh;
+    margin-right: 0.5vw;
+    }
+
+}

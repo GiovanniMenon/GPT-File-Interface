@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html data-bs-theme="dark" lang="">
+
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- Css File -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+        <!-- Jquery e Script.js -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+        <script  src="{{ url_for('static', filename='script.js') }}"> </script>
+         <!--  Bootstrap CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+
+        <!-- Bootstrap JS e jQuery -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+        <title>Nome Progetto</title>
+
+    </head>
+<body>
+
+
+    <div class="position-absolute end-0 me-5">
+        <div class="row">
+            <button class="btn btn-primary p-2 mt-3 me-1 rounded-2 z-3 btn-center-icon" title="Pulisci Pagina" id="button_clear_Page" onclick="clearPage()"><i class="fa-solid fa-broom"></i></button>
+        </div>
+        <div class="row" >
+            <button class="btn btn-danger p-2 mt-3 me-1 rounded-2 z-3 btn-center-icon" title="Elimina il Contesto"  id="button_context" onclick="resetContest()"><i class="fa-solid fa-trash"></i></button>
+        </div>
+    </div>
+
+    <div class="position-absolute dropup-center dropup bottom-0 mb-5" id="lang_menu_body">
+                <button id="current_lang" class="btn btn-secondary dropdown-toggle current_lang" type="button" data-bs-toggle="dropdown" aria-expanded="false">{% if lang %}{{lang}}{% endif %}</button>
+                <ul class="dropdown-menu">
+                        <li class="p-2">
+                            <input type="text" id="languageSearch1" class="form-control form-control-sm" placeholder="Cerca lingua" oninput="filterLanguages(1)">
+                        </li>
+                        <hr>
+                        <div class="language-list-scrollable overflow-auto">
+                            <div class="h-100 " id="languageList1">
+                                    <li><button class="dropdown-item" value="Chinese" title="Chinese" onclick="change_language(this,'translate')">Cinese</button></li>
+                                    <li><button class="dropdown-item" value="Korean" title="Korean" onclick="change_language(this,'translate')">Coreano</button></li>
+                                    <li><button class="dropdown-item" value="Danish" title="Danish" onclick="change_language(this,'translate')">Danese</button></li>
+                                    <li><button class="dropdown-item" value="Finnish" title="Finnish" onclick="change_language(this,'translate')">Finlandese</button></li>
+                                    <li><button class="dropdown-item" value="French" title="French" onclick="change_language(this,'translate')">Francese</button></li>
+                                    <li><button class="dropdown-item" value="Japanese" title="Japanese" onclick="change_language(this,'translate')">Giapponese</button></li>
+                                    <li><button class="dropdown-item" value="Greek" title="Greek" onclick="change_language(this,'translate')">Greco</button></li>
+                                    <li><button class="dropdown-item" value="English" title="English" onclick="change_language(this,'translate')">Inglese</button></li>
+                                    <li><button class="dropdown-item" value="Italian" title="Italian" onclick="change_language(this,'translate')">Italiano</button></li>
+                                    <li><button class="dropdown-item" value="Norwegian" title="Norwegian" onclick="change_language(this,'translate')">Norvegese</button></li>
+                                    <li><button class="dropdown-item" value="Dutch" title="Dutch" onclick="change_language(this,'translate')">Olandese</button></li>
+                                    <li><button class="dropdown-item" value="Polish" title="Polish" onclick="change_language(this,'translate')">Polacco</button></li>
+                                    <li><button class="dropdown-item" value="Portuguese" title="Portuguese" onclick="change_language(this,'translate')">Portoghese</button></li>
+                                    <li><button class="dropdown-item" value="Russian" title="Russian" onclick="change_language(this,'translate')">Russo</button></li>
+                                    <li><button class="dropdown-item" value="Spanish" title="Spanish" onclick="change_language(this,'translate')">Spagnolo</button></li>
+                                    <li><button class="dropdown-item" value="Swedish" title="Swedish" onclick="change_language(this,'translate')">Svedese</button></li>
+                                    <li><button class="dropdown-item" value="German" title="German" onclick="change_language(this,'translate')">Tedesco</button></li>
+                            </div>
+                        </div>
+                </ul>
+            </div>
+
+    <div class="d-flex flex-column position-absolute p-1 h-100 bg-body-tertiary shadow-lg align-items-center my-hidden" id="chat_sidebar">
+        <span class="mx-auto fs-6 custom-fs mt-2 fw-bold"> MODELLI </span>
+        <div class="row mt-2 ">
+            <div class="container-fluid bg-light-subtle p-3 rounded-3 shadow-lg ">
+                    <button class="btn btn-md custom-btn btn-primary" id="GPT-3" value="gpt-3.5-turbo"  onclick="change_chat_model(this)">GPT-3.5</button>
+                    <button class="btn btn-md custom-btn bg-transparent" id="GPT-4" value="gpt-4"  onclick="change_chat_model(this)">GPT-4</button>
+            </div>
+        </div>
+
+        <div class="row w-100 mt-3 text-center p-2 mt-auto">
+
+             <hr>
+                        <p class="fs-4 fw-bold"> Carica un File </p>
+                        <input type="file" class="form-control form-control-md pe-0  mb-3 mt-4" id="cont_form_input_file" accept=".pdf, .json, .txt , .docx , .cpp , .xlsx , .csv, .html, .py, .java , .xls" multiple/>
+
+                        <button class="btn btn-primary  btn-md custom-btn" onclick="checkFileSelected()" accept=".docx, .txt, .pdf">Carica</button>
+
+
+            </div>
+        <div class="row w-100 mt-0 mx-0"  role="group">
+            <div class="container bg-body-tertiary p-0  rounded-3 align-items-center text-center" id="cont_file">
+
+                <div class="container-fluid bg-body-tertiary overflow-auto "  id="cont_contest_file">
+                    {% for file in file_context%}
+                    <div class="card text-start border-0 p-1 mt-1 mb-1 shadow-lg" data-filename="{{ file.file|safe }}">
+                        <h6 class="card-title fs-6 fw-bold pe-5 mb-0 custom-fs" data-filename="{{ file.file|safe }}" id='UploadedFile_Name'>{{file.file|replace('-' , '.')|replace('_',' ')}}</h6>
+                        <p class="card-text  fs-6 mb-0 custom-fs" data-filename="{{ file.file|safe }}" id='UploadedFile_Token'>Token: {{file.token}} </p>
+                        <button data-filename="{{ file.file|safe }}" class="btn btn-outline-danger btn-sm ms-auto position-absolute end-0 me-1" onclick='remFile("{{ file.file }}")' ><i class="fa-solid fa-square-minus"></i></button>
+                    </div>
+                    {% endfor %}
+
+                </div>
+                <hr>
+            </div>
+
+
+        </div>
+
+
+        <div class="row mt-auto w-100" role="group">
+
+            <div class="card p-1">
+                    <div class="row">
+                        <div class="col-md-8 text-start">
+                                <p class="card-text fs-6 custom-fs" > Messaggi : <span id="chat_information_Message">{{information.Num_Message}} </span></p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                             <button class="btn btn-sm btn-primary fs-6 custom-fs" data-bs-toggle="modal" data-bs-target="#information"> <i class="fa-solid fa-circle-info" id="info_icon" ></i></button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col text-start">
+                            <p class="my-0 fs-6 custom-fs"> Token Totali : <span id="chat_information_Token">{{information.Num_Token}}</span> </p>
+                            <p class="my-0 mt-1 fw-bold fs-6 fs-6 custom-fs"> Token Messaggio Attuale : <span id="chat_information_Token_Messaggio">0</span> </p>
+                        </div>
+
+                    </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-column position-absolute p-1 h-100 bg-body-tertiary shadow-lg align-items-center my-hidden" id="translate_sidebar">
+            <span class="mx-auto fs-6 custom-fs mt-2 fw-bold"> Traduci con  </span>
+            <div class="mt-3" id="lang_file_model">
+                  <div class="container-fluid bg-light-subtle p-3 rounded-3 shadow-lg ">
+                    <button class="btn btn-md custom-btn btn-primary" id="GPT-AI" value="GPT-AI"  onclick="change_trans_model(this)">GPT AI</button>
+                    <button class="btn btn-md custom-btn bg-transparent" id="Google-AI" value="Google-AI"  onclick="change_trans_model(this)">Google AI</button>
+                </div>
+            </div>
+            <div class="row w-100 text-center p-2 mt-auto">
+                        <p class="fs-4 fw-bold"> Traduci un File</p>
+                        <hr>
+                        <input type="file" class="form-control form-control-md pe-0 mb-3 mt-4" id="translate_file_input" >
+
+                        <button class="btn btn-md custom-btn btn-primary  " onclick="translate_file('text')" accept=".docx, .txt, .pdf">Traduci</button>
+                        <div class="form-text fst-italic" id="basic-addon4">.docx , .pdf , .txt</div>
+            </div>
+            <hr>
+              <div class="dropup-center dropup bottom-0 mb-auto" id="lang_file_opt">
+                  <button id="current_file_opt" class="btn btn-dark dropdown-toggle btn-md custom-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">Testo</button>
+                              <ul class="dropdown-menu">
+                                 <li><button class="dropdown-item" value="documento" title="documento" onclick="change_translate_opt(this,'Documento')">Documento</button></li>
+                                <li><button class="dropdown-item" value="testo" title="File di testo" onclick="change_translate_opt(this,'Testo')">Testo</button></li>
+                              </ul>
+              </div>
+
+            <div class="dropup-center dropup bottom-0 mb-2" id="lang_menu">
+                <button id="current_lang" class="btn btn-secondary dropdown-toggle btn-md custom-btn current_lang" type="button" data-bs-toggle="dropdown" aria-expanded="false">{% if lang %}{{lang}}{% endif %}</button>
+                <ul class="dropdown-menu">
+                        <li class="p-2">
+                            <input type="text" id="languageSearch2" class="form-control form-control-sm" placeholder="Cerca lingua" oninput="filterLanguages(2)">
+                        </li>
+                        <hr>
+                        <div class="language-list-scrollable overflow-auto">
+                            <div class="h-100 " id="languageList2">
+                                      <li><button class="dropdown-item" value="Chinese" title="Chinese" onclick="change_language(this,'translate')">Cinese</button></li>
+                                      <li><button class="dropdown-item" value="Korean" title="Korean" onclick="change_language(this,'translate')">Coreano</button></li>
+                                      <li><button class="dropdown-item" value="Danish" title="Danish" onclick="change_language(this,'translate')">Danese</button></li>
+                                      <li><button class="dropdown-item" value="Finnish" title="Finnish" onclick="change_language(this,'translate')">Finlandese</button></li>
+                                      <li><button class="dropdown-item" value="French" title="French" onclick="change_language(this,'translate')">Francese</button></li>
+                                      <li><button class="dropdown-item" value="Japanese" title="Japanese" onclick="change_language(this,'translate')">Giapponese</button></li>
+                                      <li><button class="dropdown-item" value="Greek" title="Greek" onclick="change_language(this,'translate')">Greco</button></li>
+                                      <li><button class="dropdown-item" value="English" title="English" onclick="change_language(this,'translate')">Inglese</button></li>
+                                      <li><button class="dropdown-item" value="Italian" title="Italian" onclick="change_language(this,'translate')">Italiano</button></li>
+                                      <li><button class="dropdown-item" value="Norwegian" title="Norwegian" onclick="change_language(this,'translate')">Norvegese</button></li>
+                                      <li><button class="dropdown-item" value="Dutch" title="Dutch" onclick="change_language(this,'translate')">Olandese</button></li>
+                                      <li><button class="dropdown-item" value="Polish" title="Polish" onclick="change_language(this,'translate')">Polacco</button></li>
+                                      <li><button class="dropdown-item" value="Portuguese" title="Portuguese" onclick="change_language(this,'translate')">Portoghese</button></li>
+                                      <li><button class="dropdown-item" value="Russian" title="Russian" onclick="change_language(this,'translate')">Russo</button></li>
+                                      <li><button class="dropdown-item" value="Spanish" title="Spanish" onclick="change_language(this,'translate')">Spagnolo</button></li>
+                                      <li><button class="dropdown-item" value="Swedish" title="Swedish" onclick="change_language(this,'translate')">Svedese</button></li>
+                                      <li><button class="dropdown-item" value="German" title="German" onclick="change_language(this,'translate')">Tedesco</button></li>
+                            </div>
+                        </div>
+                </ul>
+            </div>
+    </div>
+
+    <div class="d-flex flex-column position-absolute p-1 h-100 bg-body-tertiary shadow-lg align-items-center my-hidden" id="audio_sidebar">
+        <div class="row w-100  text-center p-2 mt-auto">
+                    <p class="fs-4 fw-bold"> Carica un Audio </p>
+                    <hr>
+                    <input type="file" class="form-control form-control-md pe-0 my-3 mt-5 " id="transcribe_audio_input" >
+
+                    <button class="btn btn-primary btn-md custom-btn" onclick="transcribe_audio()" accept=".mp3, .mp4, .mpeg, .mpga, .m4a, .wav, .webm , mp4"> Elabora </button>
+                    <div class="form-text fst-italic" id="basic-addon4">.mp3, .mpeg, .mpga, .m4a, .wav, .webm e anche .mp4</div>
+        </div>
+
+
+
+        <div class="dropup-center dropup mt-5 ">
+                <button id="current_audioOption" class="btn btn-secondary btn-md custom-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Trascrizione</button>
+                <ul class="dropdown-menu">
+                                <li><button class="dropdown-item" value="Trascrizione" title="Trascrizione" onclick="change_audioOption(this)">Trascrizione</button></li>
+                                <li><button class="dropdown-item" value="Sommario" title="Sommario" onclick="change_audioOption(this)">Sommario</button></li>
+                                <li><button class="dropdown-item" value="Riassunto" title="Riassunto" onclick="change_audioOption(this)">Riassunto</button></li>
+                                <li><button class="dropdown-item" value="Traduzione" title="Traduzione" onclick="change_audioOption(this)">Traduzione</button></li>
+                </ul>
+        </div>
+        <div class="dropup-center dropup mt-5 mb-auto" id="audio_lang_menu">
+                <button id="current_audiolang" class="btn btn-primary btn-md custom-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Inglese</button>
+                <ul class="dropdown-menu">
+                        <li class="p-2">
+                            <input type="text" id="languageSearch3" class="form-control form-control-sm" placeholder="Cerca lingua" oninput="filterLanguages(3)">
+                        </li>
+                        <hr>
+                        <div class="language-list-scrollable overflow-auto">
+                            <div class="h-100 " id="languageList3">
+                                <li><button class="dropdown-item" value="Chinese" title="Chinese" onclick="change_language(this,'audio')">Cinese</button></li>
+                                <li><button class="dropdown-item" value="Korean" title="Korean" onclick="change_language(this,'audio')">Coreano</button></li>
+                                <li><button class="dropdown-item" value="Danish" title="Danish" onclick="change_language(this,'audio')">Danese</button></li>
+                                <li><button class="dropdown-item" value="Finnish" title="Finnish" onclick="change_language(this,'audio')">Finlandese</button></li>
+                                <li><button class="dropdown-item" value="French" title="French" onclick="change_language(this,'audio')">Francese</button></li>
+                                <li><button class="dropdown-item" value="Japanese" title="Japanese" onclick="change_language(this,'audio')">Giapponese</button></li>
+                                <li><button class="dropdown-item" value="Greek" title="Greek" onclick="change_language(this,'audio')">Greco</button></li>
+                                <li><button class="dropdown-item" value="English" title="English" onclick="change_language(this,'audio')">Inglese</button></li>
+                                <li><button class="dropdown-item" value="Italian" title="Italian" onclick="change_language(this,'audio')">Italiano</button></li>
+                                <li><button class="dropdown-item" value="Norwegian" title="Norwegian" onclick="change_language(this,'audio')">Norvegese</button></li>
+                                <li><button class="dropdown-item" value="Dutch" title="Dutch" onclick="change_language(this,'audio')">Olandese</button></li>
+                                <li><button class="dropdown-item" value="Polish" title="Polish" onclick="change_language(this,'audio')">Polacco</button></li>
+                                <li><button class="dropdown-item" value="Portuguese" title="Portuguese" onclick="change_language(this,'audio')">Portoghese</button></li>
+                                <li><button class="dropdown-item" value="Russian" title="Russian" onclick="change_language(this,'audio')">Russo</button></li>
+                                <li><button class="dropdown-item" value="Spanish" title="Spanish" onclick="change_language(this,'audio')">Spagnolo</button></li>
+                                <li><button class="dropdown-item" value="Swedish" title="Swedish" onclick="change_language(this,'audio')">Svedese</button></li>
+                                <li><button class="dropdown-item" value="German" title="German" onclick="change_language(this,'audio')">Tedesco</button></li>
+
+
+                            </div>
+                        </div>
+                </ul>
+            </div>
+            <div class="row w-75 mx-auto text-center mb-5">
+                <span class="mb-3 fs-6 custom-fs" id="progress_bar_State">Nessun Caricamento</span>
+                <div class="progress w-100 p-0" role="progressbar" aria-label="Basic example" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="height: 7px">
+                  <div class="progress-bar" id="progress_bar_audio" style="width: 0%;"></div>
+                </div>
+            </div>
+    </div>
+
+
+
+    <div class="d-flex flex-column flex-shrink-0 bg-body-tertiary shadow-lg position-absolute h-100" id="cont_sidebar">
+        <ul class="nav nav-pills nav-flush flex-column mb-auto text-center mt-auto">
+            <li class="nav-item" onclick="show_elements(this)" id="chat_sidebar_li">
+              <a  class="nav-link active px-0 py-3 rounded-2 mt-2"  data-bs-placement="bottom" aria-label="Chat" data-bs-original-title="Chat">
+                <i class="fa-solid fa-message fs-5"></i>
+                <br>
+                <p class="fs-6 custom-fs p-0 m-0">Chat</p>
+            </a>
+            </li>
+            <li onclick="show_elements(this)" class="nav-item" id="translate_sidebar_li">
+              <a  class="nav-link py-3 px-0 rounded-2 mt-2 link-body-emphasis"  data-bs-placement="bottom" aria-label="Audio" data-bs-original-title="Audio">
+                <i class="fa-solid fa-language"></i>
+                <br>
+                <p class="fs-6 custom-fs p-0 m-0">Translate</p>
+            </a>
+            </li>
+            <li onclick="show_elements(this)" class="nav-item" id="audio_sidebar_li">
+              <a  class="nav-link py-3 px-0 rounded-2 mt-2 link-body-emphasis"  data-bs-placement="bottom" aria-label="Audio" data-bs-original-title="Audio">
+                <i class="fa-solid fa-headset fs-5 position-relative">
+                    <span class=" position-absolute top-0 start-100 translate-middle bg-danger border border-light rounded-circle" id="audio_badge"></span>
+                </i>
+                <br>
+                  <p class="fs-6 custom-fs p-0 m-0">Audio</p>
+
+
+            </a>
+            </li>
+
+
+
+            <li onclick="LogOut()" class="nav-item mt-auto bottom-0 position-absolute w-100" id="user_sidebar">
+                <a  class="nav-link py-3 mt-auto link-body-emphasis"  data-bs-placement="bottom" aria-label="User" data-bs-original-title="User">
+                <i class="fa-solid fa-right-from-bracket fs-5"></i>
+                <br>
+                  <span id="username" class="fs-6">  {{user}} </span>
+               </a>
+              </li>
+          </ul>
+    </div>
+
+
+    <div class="col-md-8 offset-md-3 position-absolute" id="cont">
+        <div class="position-absolute shadow-lg w-100 bg-body-tertiary" id="cont_chat"  onclick="switchCont(this)">
+
+            {% for element in elements|reverse %}
+                {% if element.user_text %}
+                <div class="row" id="cont_user_chat"><pre> <span class="text-primary"> -> |</span> {{ element.user_text|safe }} </pre> </div>
+                {% endif %}
+                {% if element.response_text %}
+                <div class="row bg-light-subtle rounded-3 p-3 shadow mt-2" id="cont_ai_chat">  <pre>{{ element.response_text|safe}}</pre>
+                    {% if element.link_text %}
+                        <div class="d-flex p-1 shadow rounded-3 mt-4" id="cont_link_chat"> {{ element.link_text|safe }}  </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% endfor %}
+
+        </div>
+
+            <form class="position-absolute w-100 end-0 bottom-0 mb-3" method="POST" action="/process_form" id="cont_form" enctype=multipart/form-data >
+                <div class="input-group" id="cont_form_textarea_wrapper">
+
+                    <textarea  class="form-control lh-base pt-3 pl-2 w-100 shadow-lg  bg-light-subtle" id="cont_form_text" name="text" placeholder="Inserisci il tuo messaggio o un link ad una pagina web" onclick="switchCont(this)"  required></textarea>
+
+                    <div class="position-absolute d-flex end-0 align-items-start pt-3 text-primary fs-5" id="cont_form_button_menu">
+                        <label for="cont_form_submit_button" class="cont_form_label_icon me-3" >
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </label>
+
+
+                        <input type="submit" value="Invia" id="cont_form_submit_button" style="display: none" onclick="sendForm()">
+                    </div>
+
+
+                </div>
+
+            </form>
+
+    </div>
+
+
+
+    <div class="btn-group dropup  position-fixed bottom-0 end-0 p-3">
+        <button class="btn btn-secondary dropdown-toggle " type="button" data-bs-toggle="dropdown">
+            <i class="fa-solid fa-moon" id="themeIcon"></i>
+        </button>
+        <ul class="dropdown-menu" id="themeDropdown">
+        <li><a class="dropdown-item"  data-theme="dark"><i class="fa-solid fa-moon"></i> Dark</a></li>
+        <li><a class="dropdown-item"  data-theme="light"><i class="fa-solid fa-sun"></i> Light </a></li>
+        </ul>
+    </div>
+    <div class="alert position-absolute bottom-0 end-0 alert-danger" id="alert_waiting" role="alert">
+      <p class="m-0 p-0 fs-6 custom-fs"> C'è già una richiesta in corso.<br>Aspetta il termine della richiesta in corso prima di farne un'altra. <br>Le richieste audio sono isolate</p>
+    </div>
+
+
+
+
+    <div class="modal fade" id="information"  tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Informazioni</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+              <div class="row w-100">
+                <span>I <b>Token</b> si riferiscono alle unità di testo in cui viene suddiviso il <b>testo di input</b> quando si effettua una richiesta all'API.
+                    <br> <br>È <b>importante</b> comprendere che ci sono limiti al numero di token che si possono utilizzare in una singola richiesta API. Il conteggio dei token influisce sulla quantità di <b>risorse computazionali</b> richieste e sul costo della richiesta.
+                    <br> <br>In particolare, maggiore è il numero di token e più il modello sarà lento nella elaborazione di nuove richieste.
+                    <br>  Per questo è <b>consigliato</b> cancellare il contesto quando possibile.</span>
+
+              </div>
+              <hr>
+                <div class="row w-100">
+                        <h3 class="fs-4"> LIMITI </h3>
+                    </div>
+                    <div class="row w-100">
+
+                        <p><b> GPT 3.5 </b>: 4096 Token</p>
+                        <p><b> GPT 4 </b> : 8,192 Token</p>
+                    </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+</body>
+</html>
