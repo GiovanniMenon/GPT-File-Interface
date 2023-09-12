@@ -1,4 +1,3 @@
-
 from app.utils.openai_utils import chat_text_call
 from flask import render_template, request, jsonify, redirect, url_for
 from flask_login import login_required, current_user, logout_user
@@ -122,7 +121,8 @@ def text_form_response():
         user_locks[user_id] = threading.Lock()
 
     if user_locks[user_id].locked():
-        return jsonify({"message": "Un'altra richiesta è in corso per questo utente."}), 400
+        return jsonify(
+            {"message": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
 
     with user_locks.setdefault(user_id, threading.Lock()):
         try:
@@ -137,12 +137,11 @@ def text_form_response():
             }
 
             if translate == "true":
-                response = translate_manager(text, session['LANGUAGE_OPTION_CHOOSE'])
+                response = translate_manager(text, session['LANGUAGE_OPTION_CHOOSE'], session['MODEL_TRANS_MODEL'])
                 session['ELEMENTS_TRANSLATE'].append({'response_text': decode(response)})
                 session.modified = True
                 data['elements'] = session['ELEMENTS_TRANSLATE']
                 data['section'] = 'translate_sidebar'
-
             else:
                 response = chat_text_call(text)
                 session['ELEMENTS_CHAT'].append({'user_text': escaped_text, 'response_text': decode(response)})
@@ -166,7 +165,8 @@ def upload_file():
         user_locks[user_id] = threading.Lock()
 
     if user_locks[user_id].locked():
-        return jsonify({"message": "Un'altra richiesta è in corso per questo utente."}), 400
+        return jsonify(
+            {"message": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
     with user_locks.setdefault(user_id, threading.Lock()):
         try:
             try:
@@ -233,8 +233,8 @@ def clear_elements():
             print(f"Errore nella eliminazione dei file: {str(e)}")
             return jsonify({"error": "Errore nella eliminazione dei file:\n" + str(e)}), 500
     except Exception as e:
-            print(f"Errore nella pulizia della chat: {str(e)}")
-            return jsonify({"error": "Errore nella pulizia della chat:\n" + str(e)}), 500
+        print(f"Errore nella pulizia della chat: {str(e)}")
+        return jsonify({"error": "Errore nella pulizia della chat:\n" + str(e)}), 500
 
 
 @main.route('/clear_context', methods=['POST'])
@@ -276,7 +276,8 @@ def remove_file():
         user_locks[user_id] = threading.Lock()
 
     if user_locks[user_id].locked():
-        return jsonify({"message": "Un'altra richiesta è in corso per questo utente."}), 400
+        return jsonify(
+            {"message": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
     with user_locks.setdefault(user_id, threading.Lock()):
         try:
             try:
@@ -321,7 +322,8 @@ def remove_file():
 @login_required
 def get_token():
     try:
-        return jsonify({"token": num_tokens_from_messages(request.form.get('text', session["MODEL_API_OPTION_CHOOSE"]))})
+        return jsonify(
+            {"token": num_tokens_from_messages(request.form.get('text', session["MODEL_API_OPTION_CHOOSE"]))})
     except Exception as e:
         print(f"Errore : {str(e)}")
         return jsonify({"error": "Errore nel calcolo dei token"}), 500
@@ -361,11 +363,13 @@ def translate_file_response():
         user_locks[user_id] = threading.Lock()
 
     if user_locks[user_id].locked():
-        return jsonify({"message": "Un'altra richiesta è in corso per questo utente."}), 400
+        return jsonify(
+            {"message": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
     with user_locks.setdefault(user_id, threading.Lock()):
         try:
             try:
                 file = request.files['file']
+                print(request.form.get('opt'))
                 file_manager(file, "translate", request.form.get('opt'))
 
                 data = {
@@ -398,13 +402,15 @@ def transcribe_audio_response():
         user_audio_locks[user_id] = threading.Lock()
 
     if user_audio_locks[user_id].locked():
-        return jsonify({"message": "Un'altra richiesta è in corso per questo utente."}), 400
+        return jsonify(
+            {"message": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
     with user_audio_locks.setdefault(user_id, threading.Lock()):
         try:
             try:
                 file = request.files['file']
 
-                file_manager(file, 'audio', request.form.get('transcriptionOption'), request.form.get('translationLanguage'))
+                file_manager(file, 'audio', request.form.get('transcriptionOption'),
+                             request.form.get('translationLanguage'))
 
                 data = {
                     'section': "audio_sidebar",

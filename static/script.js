@@ -199,8 +199,10 @@ function sendForm() {
                     if (waiting_chat) waiting_chat = false
                     if (waiting_chat_traslate) waiting_chat_traslate = false
                 },
-            error: function() {
-                    waiting_alert()
+            error: function(error) {
+                     if (error.responseJSON && error.responseJSON.request_in_progress === true) {
+                        waiting_alert();
+                    }
                     if(waiting_chat) waiting_chat = false
                     if(waiting_chat_traslate) waiting_chat_traslate = false
                 }
@@ -263,7 +265,7 @@ function clearPage()   {
         }
  
     /*Upload File Behaviour*/
-function checkFileSelected() {
+function upload_file_chat() {
         if(waiting_chat || waiting_chat_traslate){
             waiting_alert()
             return
@@ -316,8 +318,10 @@ function checkFileSelected() {
                     waiting_chat = false
                 }, 
                 error: function(error) {
+                    if (error.responseJSON && error.responseJSON.request_in_progress === true) {
+                        waiting_alert();
+                    }
                     waiting_chat = false;
-                    waiting_alert()
                     alert(error.responseJSON.error);
                 }
             });
@@ -329,7 +333,6 @@ function remFile(element){
             return
 
         }
-        
             $.ajax({
                     type: "POST",
                     url: "/remove_file",
@@ -576,30 +579,23 @@ function change_translate_opt(element,opt) {
 
 }
 
-function translate_file(type) {
+function translate_file() {
 
     if(waiting_chat || waiting_chat_traslate){
         waiting_alert()
         return
     }
 
-    let input
-    if(type === "text"){
-        input = document.getElementById('translate_file_input');
-        const fileExtension = input.files[0].name.split('.').pop().toLowerCase();
-         if (!allowedExtensionsFile.includes(fileExtension)){
-            alert("Estensione non consentita")
-            return
-        }
-    }else{
-    input = document.getElementById('translate_audio_input');
-    const fileExtension = input.files[0].name.split('.').pop().toLowerCase();
-     if (!allowedExtensionsAudio.includes(fileExtension)){
-            alert("Estensione non consentita")
-            return
-        }
 
-        
+    let input = document.getElementById('translate_file_input');
+    const fileExtension = input.files[0].name.split('.').pop().toLowerCase();
+    if (!allowedExtensionsFile.includes(fileExtension)){
+            alert("Estensione non consentita")
+            return
+        }
+    else if($('#current_file_opt').text().trim().toLowerCase() === 'documento' && fileExtension !== "docx"){
+            alert("Estensione non consentita")
+            return
     }
 
     if (!input.files.length) {
@@ -629,8 +625,11 @@ function translate_file(type) {
                 document.getElementById('cont_form_text').placeholder="Inserisci il testo da tradurre";
             }, 
             error: function(error) {
-                waiting_chat_traslate = false
-                waiting_alert()
+                if (error.responseJSON && error.responseJSON.request_in_progress === true) {
+                        waiting_alert();
+                    }
+                waiting_chat_traslate = false;
+
             }
         });
 }
@@ -732,8 +731,10 @@ function transcribe_audio(){
                 }
             }, 
             error: function(error) {
+                 if (error.responseJSON && error.responseJSON.request_in_progress === true) {
+                        waiting_alert();
+                    }
                 waiting_audio= false;
-                waiting_alert()
                 $('#progress_bar_State').text("Nessun Caricamento");
                 $('#progress_bar_audio').css("width" , 0 + '%')
                 alert(error.responseJSON.error);

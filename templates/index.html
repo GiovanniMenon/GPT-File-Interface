@@ -78,7 +78,7 @@
                         <p class="fs-4 custom-fs fw-bold"> Carica un File </p>
                         <input type="file" class="form-control form-control-md pe-0  mb-3 mt-4" id="cont_form_input_file" accept=".pdf, .json, .txt , .docx , .cpp , .xlsx , .csv, .html, .py, .java , .xls" multiple/>
 
-                        <button class="btn btn-primary  btn-md custom-btn" onclick="checkFileSelected()" accept=".docx, .txt, .pdf">Carica</button>
+                        <button class="btn btn-primary  btn-md custom-btn" onclick="upload_file_chat()" accept=".docx, .txt, .pdf">Carica</button>
 
 
             </div>
@@ -137,15 +137,15 @@
                         <hr>
                         <input type="file" class="form-control form-control-md pe-0 mb-3 mt-4" id="translate_file_input" >
 
-                        <button class="btn btn-md custom-btn btn-primary  " onclick="translate_file('text')" accept=".docx, .txt, .pdf">Traduci</button>
+                        <button class="btn btn-md custom-btn btn-primary  " onclick="translate_file()" accept=".docx, .txt, .pdf">Traduci</button>
                         <div class="form-text fst-italic" id="basic-addon4">.docx , .pdf , .txt</div>
             </div>
             <hr>
               <div class="dropup-center dropup bottom-0 mb-auto" id="lang_file_opt">
                   <button id="current_file_opt" class="btn btn-dark dropdown-toggle btn-md custom-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">Testo</button>
                               <ul class="dropdown-menu">
-                                  <li><button class="dropdown-item" value="documento" title="documento" onclick="change_translate_opt(this,'Documento')">Documento <i>(solo .docx)</i></button></li>
-                                <li><button class="dropdown-item" value="testo" title="File di testo" onclick="change_translate_opt(this,'Testo')">Testo</button></li>
+                                  <li><button class="dropdown-item" value="Documento" title="documento" onclick="change_translate_opt(this,'Documento')">Documento <i>(solo .docx)</i></button></li>
+                                <li><button class="dropdown-item" value="Testo" title="File di testo" onclick="change_translate_opt(this,'Testo')">Testo</button></li>
                               </ul>
               </div>
 
