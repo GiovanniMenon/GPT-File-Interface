@@ -51,3 +51,4 @@ def split_text_into_sections(text, max_tokens, model="gpt-3.5-turbo-0613"):
         print(f"{num_tokens_from_messages(sec)}")
 
     return sections
+
