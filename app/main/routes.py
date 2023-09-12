@@ -42,6 +42,7 @@ def home():
     session.modified = True
     session.setdefault('MODEL_API_OPTION_CHOOSE', 'gpt-3.5-turbo')
     session.setdefault('LANGUAGE_OPTION_CHOOSE', 'English')
+    session.setdefault('MODEL_TRANS_MODEL', 'CHAT-AI')
 
     if 'INFORMATION' not in session:
         session['INFORMATION'] = {"Num_Message": 0, "Num_Token": 0}
@@ -190,10 +191,17 @@ def upload_file():
             user_locks.pop(user_id, None)
 
 
-@main.route('/model_api', methods=['POST'])
+@main.route('/model_chat_api', methods=['POST'])
 @login_required
-def change_model():
+def change_chat_model():
     session['MODEL_API_OPTION_CHOOSE'] = request.form.get('new_value')
+    return jsonify({"Message": "Modello Cambiato"})
+
+
+@main.route('/model_trans_api', methods=['POST'])
+@login_required
+def change_trans_model():
+    session['MODEL_TRANS_MODEL'] = request.form.get('new_value')
     return jsonify({"Message": "Modello Cambiato"})
 
 
