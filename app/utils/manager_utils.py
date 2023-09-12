@@ -1,54 +1,72 @@
 
-from markupsafe import escape
-import tiktoken
-import re
+import time
+import concurrent.futures
+import functools
+import os
+
+from flask import session
+
+from app.utils.document.document_builder import document_translate_builder
+from app.utils.file.file_builder import file_chat_builder, file_translate_builder, file_audio_builder
+from app.utils.file.file_utils import  is_audio, path_file, performance, remove_selected_file, \
+    save_file, compress_audio, split_audio
+from app.utils.google_utils import translate_text_with_google
+from app.utils.message_utils import num_tokens_from_messages, split_text_into_sections
+from app.utils.openai_utils import translate_text_with_gpt, transcribe_with_whisper
+from werkzeug.utils import secure_filename
+
+from app.utils.parser.parser import extract_file_content
 
 
-def decode(input_string):
-    segments = re.split(r'```(.*?)```', input_string, flags=re.DOTALL)
+def file_manager(file, scope="chat", opt="", audio_lang=""):
+    path_ = path_file(file)
+    filename = file.filename
+    save_file(file, path_)
 
-    processed_segments = []
+    if scope == 'audio':
+        text = audio_manager(path_)
+    else:
+        text = extract_file_content(path_, secure_filename(filename))
 
-    for i, segment in enumerate(segments):
-        processed_segments.append(
-            f"<pre><code>{escape(segment)}</code></pre>") if i % 2 != 0 else processed_segments.append(escape(segment))
-    return ''.join(processed_segments)
-
-
-def num_tokens_from_messages(string, model="gpt-3.5-turbo-0613"):
-    try:
-        encoding = tiktoken.encoding_for_model(model)
-    except KeyError:
-        encoding = tiktoken.get_encoding("cl100k_base")
-
-    tokenized_string = encoding.encode(string)
-    return len(tokenized_string)
-
-
-def split_text_into_sections(text, max_tokens, model="gpt-3.5-turbo-0613"):
-    sections = []
-    current_section = ""
-    current_section_tokens = 0
-
-    paragraphs = text.split(" ")
-
-    for paragraph in paragraphs:
-        paragraph_tokens = num_tokens_from_messages(paragraph, model)
-
-        if current_section_tokens + paragraph_tokens > max_tokens-50 and \
-                ("." in paragraph or current_section_tokens + paragraph_tokens > max_tokens + 50):
-            current_section += paragraph
-            sections.append(current_section)
-            current_section = ""
-            current_section_tokens = 0
+    if scope == "chat":
+        file_chat_builder(text, filename)
+    elif scope == "translate":
+        if opt == 'documento':
+            document_translate_builder(path_)
         else:
-            current_section += paragraph + ' '
-            current_section_tokens += paragraph_tokens
+            file_translate_builder(text)
+    elif scope == "audio":
+        file_audio_builder(text, opt, audio_lang)
+    remove_selected_file(path_)
 
-    if current_section:
-        sections.append(current_section)
-    for sec in sections:
-        print(f"{num_tokens_from_messages(sec)}")
 
-    return sections
+def translate_manager(text, lang, model="GPT-AI", filename="Utente"):
+    if model == 'Google-AI':
+        return translate_text_with_google(lang, text)
+    else:
+        if num_tokens_from_messages(text) > 500:
+            segments = split_text_into_sections(text, 350)
+            start_time = time.time()
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                translate_call_with_lang = functools.partial(translate_text_with_gpt, lang)
+                results = executor.map(translate_call_with_lang, segments)
+                translated_text = ''.join(results)
+                end_time = time.time()
+                performance(filename, session['LANGUAGE_OPTION_CHOOSE'], end_time - start_time)
+                return translated_text
+        else:
+            return translate_text_with_gpt(session['LANGUAGE_OPTION_CHOOSE'], text)
 
+
+def audio_manager(path_, filename="Utente"):
+    if os.path.getsize(path_) / (1024 * 1024) > 25 or not (is_audio(filename)):
+        segments = split_audio(compress_audio(path_))
+        start_time = time.time()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            results = executor.map(transcribe_with_whisper, segments)
+            transcribe_text = ''.join(results)
+            end_time = time.time()
+            performance(filename, "Trascrizione", end_time - start_time)
+            return transcribe_text
+    else:
+        return transcribe_with_whisper(path_)

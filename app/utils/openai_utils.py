@@ -116,7 +116,7 @@ def audio_text_call(scope, text):
         return "Errore nella richiesta\n" + str(e)
 
 
-def translate_document_text_call(lang,part):
+def translate_document_text_call(lang, part):
     for attempt in range(MAX_TRIES):
         try:
             context_translate = [
@@ -129,7 +129,7 @@ def translate_document_text_call(lang,part):
                              )},
                 {"role": "user", "content": part}
             ]
-            time.sleep(0.3)
+            time.sleep(0.5)
             completion = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo-16k-0613",
                 messages=[
@@ -140,7 +140,7 @@ def translate_document_text_call(lang,part):
 
                 ])
 
-            return part, completion.choices[0].message["content"]
+            return completion.choices[0].message["content"]
         except Exception as e:
             if 'Bad gateway' in str(e) and attempt < MAX_TRIES - 1:
                 continue
