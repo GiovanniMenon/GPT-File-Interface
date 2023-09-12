@@ -1,7 +1,9 @@
 
 from app.utils.file.file_utils import write_file
-from app.utils.message_utils import num_tokens_from_messages
-from app.utils.openai_utils import audio_text_call
+from app.utils.message_utils import num_tokens_from_messages, split_text_into_sections
+from app.utils.openai_utils import audio_text_call, translate_text_with_gpt
+import concurrent.futures
+import functools
 
 
 def file_chat_builder(text, filename):
@@ -24,7 +26,7 @@ def file_translate_builder(text):
     from flask import session
     from app.utils.manager_utils import translate_manager
 
-    text = translate_manager(text, session['LANGUAGE_OPTION_CHOOSE'])
+    text = translate_manager(text, session['LANGUAGE_OPTION_CHOOSE'], session['MODEL_TRANS_MODEL'])
     path_trascription = write_file(text, "translate_folder")
 
     words = text.split()
@@ -75,6 +77,7 @@ def file_audio_builder(text, audio_opt, audio_lang):
                   style='display:block ;' class='mt-2' download> <pre> Scarica la Trascrizione : " +
                   " <i class='fa-solid fa-file'></i></pre> </a>"})
     except Exception as e:
+
         if audio_opt == 'Trascrizione':
             words = text.split()
             result_print = " ".join(words[:100]) + " ...." if len(words) > 100 else text
@@ -84,9 +87,32 @@ def file_audio_builder(text, audio_opt, audio_lang):
                                                style='display:block;' download> <pre> Scarica la Trascrizione : " +
                                                            " <i class='fa-solid fa-file'></i></pre> </a>"})
         else:
+
+            result = ""
+            if audio_opt == 'Traduzione':
+                segments = split_text_into_sections(text, 3500)
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    translate_call_with_lang = functools.partial(translate_text_with_gpt, audio_lang)
+                    results = executor.map(translate_call_with_lang, segments)
+                    result = ''.join(results)
+
+            else:
+                segments = split_text_into_sections(text, 13000)
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    translate_call_with_lang = functools.partial(audio_text_call, audio_opt)
+                    results = executor.map(audio_text_call, segments)
+                    result = ''.join(results)
+
+            words = result.split()
+            result_print = " ".join(words[:100]) + " ...." if len(words) > 100 else result
+
+            path_trascription_opt = write_file(result, "audio_folder")
             path_trascription = write_file(text, "audio_folder")
-            session['ELEMENTS_AUDIO'].append({'response_text': "La trascrizione supera il limite di Token. \nTOKEN : " +
-                                                str(num_tokens_from_messages(text)) + ". Impossibile eseguire l'operazione.",
-                                              'link_text': "<a href='" + path_trascription + "' id='cont_ai_chat_file' \
-                                               style='display:block;' download> <pre> Scarica la Trascrizione : " +
-                                                           " <i class='fa-solid fa-file'></i></pre> </a>"})
+            session['ELEMENTS_AUDIO'].append(
+                {'response_text': result_print,
+                 'link_text': "<a href='" + path_trascription_opt + "' ""id='cont_ai_chat_file' \
+                             style='display:block;' download> <pre> Scarica il file : " \
+                                                                    " <i class='fa-solid fa-file'></i></pre>"
+                                                                    "<a href='" + path_trascription + "' id='cont_ai_chat_file' \
+                             style='display:block ;' class='mt-2' download> <pre> Scarica la Trascrizione : " +
+                              " <i class='fa-solid fa-file'></i></pre> </a>"})
