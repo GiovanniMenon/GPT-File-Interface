@@ -184,7 +184,7 @@ function sendForm() {
 
 
         if (translate){
-                waiting_chat_traslate = true
+            waiting_chat_traslate = true
         }else{
             waiting_chat = true
         }
@@ -530,9 +530,10 @@ $(document).ready(function() {
         if(element.id === "Google-AI" ){
             document.getElementById("GPT-AI").classList.add("bg-transparent");
             document.getElementById("GPT-AI").classList.remove("btn-primary");
-        }else{change_audioOption
-           document.getElementById("Google-AI").classList.add("bg-transparent");
-           document.getElementById("Google-AI").classList.remove("btn-primary");
+        }else{
+
+           // document.getElementById("Google-AI").classList.add("bg-transparent");
+           // document.getElementById("Google-AI").classList.remove("btn-primary");
         }
 
 
@@ -756,26 +757,31 @@ function waiting_alert(){
 
 function showLoadingAnimation(){
 
+        let chat = document.getElementById("cont_chat");
+        let loading_element = chat.querySelector("#cont_ai_chat_tmp");
 
+        if (loading_element) {
+            return
+        }
         /* Nel caso di Stampa Inversa */
-    let element = $("#cont_chat").children();
-    $("#cont_chat").empty()
+        let element = $("#cont_chat").children();
+        $("#cont_chat").empty()
 
-    let safeFormTextVal = escapeHtml(form_text_val);
+        let safeFormTextVal = escapeHtml(form_text_val);
 
-    if(!translate && !audio){
-        let userText = $("<div>").attr("class", "row").attr("id", "cont_user_chat_tmp").html("<pre> <span class='text-primary'> -> | </span>" + safeFormTextVal + "</pre>");
-        $("#cont_chat").append(userText);
+        if (!translate && !audio) {
+            let userText = $("<div>").attr("class", "row").attr("id", "cont_user_chat_tmp").html("<pre> <span class='text-primary'> -> | </span>" + safeFormTextVal + "</pre>");
+            $("#cont_chat").append(userText);
         }
 
-    let aiText = $("<div>").attr("class", "row bg-light-subtle rounded-3 p-3 shadow mt-2").attr("id", "cont_ai_chat_tmp").html("<pre id='span_tmp'> " + " </pre>");
+        let aiText = $("<div>").attr("class", "row bg-light-subtle rounded-3 p-3 shadow mt-2").attr("id", "cont_ai_chat_tmp").html("<pre id='span_tmp'> " + " </pre>");
 
-    $("#cont_chat").append(aiText);
-    $("#cont_chat").append(element);
+        $("#cont_chat").append(aiText);
+        $("#cont_chat").append(element);
 }
 
 window.onbeforeunload = function(event) {
-    if(waiting_chat || waiting_audio || waiting_chat_traslate){
+    if(waiting_chat || waiting_audio || waiting_chat_traslate ){
         event.returnValue = 'Stai lasciando la pagina prima che una delle tue richieste sia stata completata.';
     }
 };
