@@ -7,17 +7,15 @@ def document_translate_builder(path_):
     from flask import session
     from app.utils.manager_utils import translate_manager
 
-    path_to_file = ""
-
+    parts = extract_text_from_docx(path_)
+    translations = []
     if session['MODEL_TRANS_MODEL'] == 'Google-AI':
-        print("1")
-        path_to_file = docx_file_translate_google(path_, session['LANGUAGE_OPTION_CHOOSE'],'translate_folder')
+        print("Google-AI")
+        translations = docx_file_translate_google(path_, session['LANGUAGE_OPTION_CHOOSE'], parts)
     else:
-        print("2")
-        parts = extract_text_from_docx(path_)
         translations = docx_file_translate_gpt(parts, session['LANGUAGE_OPTION_CHOOSE'])
-        path_to_file = write_text_to_docx(path_, translations, 'translate_folder')
 
+    path_to_file = write_text_to_docx(path_, translations, 'translate_folder')
     session['ELEMENTS_TRANSLATE'].append({'response_text': "Documento:",
                                           'link_text': "<a href='" + path_to_file + "' id='cont_ai_chat_file' \
                                           style='display:block;' download> <pre> Scarica il Documento Tradotto" +
