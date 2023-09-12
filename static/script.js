@@ -14,7 +14,14 @@
     audio_badge = false // Visualizzazzione del badge di notifica
     form_text_val = "" // Contiene il contenuto della richiesta
 
-
+function escapeHtml(unsafe) {
+    return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
+}
     //Verifica e regola la grandezza della interfaccia
 function check_sidebar(){
         let side_bar_element = $("#cont");
@@ -216,7 +223,7 @@ function switchCont(element) {
     }
 
     /*Model Selection*/
-function changeVariable(element) {
+function change_chat_model(element) {
         element.classList.add("btn-primary");
         element.classList.remove("bg-transparent");
         if(element.id === "GPT-3" ){
@@ -228,7 +235,7 @@ function changeVariable(element) {
         }
             $.ajax({
                 type: "POST",
-                url: "/model_api",
+                url: "/model_chat_api",
                 data: { new_value: element.value },
             });
         }
@@ -506,6 +513,23 @@ $(document).ready(function() {
         });
 
  // Lenguage Selection
+    function change_trans_model(element) {
+        element.classList.add("btn-primary");
+        element.classList.remove("bg-transparent");
+        if(element.id === "Google-AI" ){
+            document.getElementById("GPT-AI").classList.add("bg-transparent");
+            document.getElementById("GPT-AI").classList.remove("btn-primary");
+        }else{
+           document.getElementById("Google-AI").classList.add("bg-transparent");
+           document.getElementById("Google-AI").classList.remove("btn-primary");
+        }
+            $.ajax({
+                type: "POST",
+                url: "/model_trans_api",
+                data: { new_value: element.value },
+            });
+        }
+
 function change_language(element,opt) {
       let button;
          if (opt === 'audio') {
@@ -535,7 +559,7 @@ function change_language(element,opt) {
 function change_translate_opt(element,opt) {
       let button;
       button = document.getElementById("current_file_opt")
-      button.textContent = element.value + " "
+      button.textContent = opt + " "
 
 }
 
@@ -572,10 +596,10 @@ function translate_file(type) {
 
     var formData = new FormData();
     formData.append("file", input.files[0]);
-    formData.append("opt", $('#current_file_opt').text().trim());
+    formData.append("opt", $('#current_file_opt').text().trim().toLowerCase());
 
 
-   showLoadingAnimation()
+    showLoadingAnimation()
 
 
     waiting_chat_traslate = true
@@ -722,8 +746,11 @@ function showLoadingAnimation(){
         /* Nel caso di Stampa Inversa */
     let element = $("#cont_chat").children();
     $("#cont_chat").empty()
+
+    let safeFormTextVal = escapeHtml(form_text_val);
+
     if(!translate && !audio){
-        let userText = $("<div>").attr("class", "row").attr("id", "cont_user_chat_tmp").html("<pre> <span class='text-primary'> -> | </span>" + form_text_val + "</pre>");
+        let userText = $("<div>").attr("class", "row").attr("id", "cont_user_chat_tmp").html("<pre> <span class='text-primary'> -> | </span>" + safeFormTextVal + "</pre>");
         $("#cont_chat").append(userText);
         }
 
