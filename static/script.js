@@ -224,6 +224,10 @@ function switchCont(element) {
 
     /*Model Selection*/
 function change_chat_model(element) {
+        if(waiting_chat){
+            waiting_alert()
+            return
+        }
         element.classList.add("btn-primary");
         element.classList.remove("bg-transparent");
         if(element.id === "GPT-3" ){
@@ -514,15 +518,23 @@ $(document).ready(function() {
 
  // Lenguage Selection
     function change_trans_model(element) {
+        if(waiting_chat_traslate){
+            waiting_alert()
+            return
+        }
         element.classList.add("btn-primary");
         element.classList.remove("bg-transparent");
         if(element.id === "Google-AI" ){
             document.getElementById("GPT-AI").classList.add("bg-transparent");
             document.getElementById("GPT-AI").classList.remove("btn-primary");
-        }else{
+        }else{change_audioOption
            document.getElementById("Google-AI").classList.add("bg-transparent");
            document.getElementById("Google-AI").classList.remove("btn-primary");
         }
+
+
+
+
             $.ajax({
                 type: "POST",
                 url: "/model_trans_api",
@@ -560,6 +572,7 @@ function change_translate_opt(element,opt) {
       let button;
       button = document.getElementById("current_file_opt")
       button.textContent = opt + " "
+
 
 }
 
@@ -617,7 +630,7 @@ function translate_file(type) {
             }, 
             error: function(error) {
                 waiting_chat_traslate = false
-                alert(error.responseJSON.error);
+                waiting_alert()
             }
         });
 }
