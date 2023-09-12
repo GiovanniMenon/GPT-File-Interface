@@ -11,6 +11,7 @@ import threading
 import time
 
 main = Blueprint('main', __name__)
+
 user_locks = {}
 user_audio_locks = {}
 
@@ -429,22 +430,6 @@ def transcribe_audio_response():
             user_audio_locks.pop(user_id, None)
 
 
-# ===============================================
-# Cluster
-
-@main.route("/embedded_file", methods=['POST'])
-def embedded_file_response():
-    file = request.files['file']
-
-    file_manager(file, "embedded")
-
-    data = {
-        'elements': session['ELEMENTS_CHAT'],
-        'file': session['FILE_CONTEXT'],
-        'information': session["INFORMATION"]
-    }
-    updateDb()
-    return jsonify(data)
 
 
 @login_manager.unauthorized_handler
