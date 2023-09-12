@@ -76,8 +76,8 @@ def file_audio_builder(text, audio_opt, audio_lang):
                   "<a href='" + path_trascription + "' id='cont_ai_chat_file' \
                   style='display:block ;' class='mt-2' download> <pre> Scarica la Trascrizione : " +
                   " <i class='fa-solid fa-file'></i></pre> </a>"})
-    except Exception as e:
 
+    except Exception as e:
         if audio_opt == 'Trascrizione':
             words = text.split()
             result_print = " ".join(words[:100]) + " ...." if len(words) > 100 else text
@@ -91,14 +91,14 @@ def file_audio_builder(text, audio_opt, audio_lang):
             result = ""
             if audio_opt == 'Traduzione':
                 segments = split_text_into_sections(text, 3500)
-                with concurrent.futures.ThreadPoolExecutor() as executor:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
                     translate_call_with_lang = functools.partial(translate_text_with_gpt, audio_lang)
                     results = executor.map(translate_call_with_lang, segments)
                     result = ''.join(results)
 
             else:
                 segments = split_text_into_sections(text, 13000)
-                with concurrent.futures.ThreadPoolExecutor() as executor:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
                     translate_call_with_lang = functools.partial(audio_text_call, audio_opt)
                     results = executor.map(audio_text_call, segments)
                     result = ''.join(results)
