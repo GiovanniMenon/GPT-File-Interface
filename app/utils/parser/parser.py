@@ -9,6 +9,7 @@ import pandas as pd
 import docx
 import re
 
+
 def extract_file_content(file_path, file_name):
     if allowed_file(file_name, {"xls", 'xlsx'}):
         df = pd.read_excel(file_path)
@@ -43,24 +44,101 @@ def extract_text_from_pdf(pdf_path):
 
 
 def extract_text_from_docx(docx_file):
-    parts = {}
+    parts = []
     doc = Document(docx_file)
 
     for paragraph in doc.paragraphs:
         for run in paragraph.runs:
             if run.text and re.sub(r'[ \t]', '', run.text) != "" and not (contains_only_punctuation(run.text.replace(" ", ""))):
-                parts[run.text] = ""
+                parts.append(run.text)
 
+    for section in doc.sections:
+        header = section.header
+        for paragraph in header.paragraphs:
+            for run in paragraph.runs:
+                if run.text and re.sub(r'[ \t]', '', run.text) != "" and not (
+                        contains_only_punctuation(run.text.replace(" ", ""))):
+                    parts.append(run.text)
+
+        footer = section.footer
+        for paragraph in footer.paragraphs:
+            for run in paragraph.runs:
+                if run.text and re.sub(r'[ \t]', '', run.text) != "" and not (
+                        contains_only_punctuation(run.text.replace(" ", ""))):
+                    parts.append(run.text)
+
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for paragraph in cell.paragraphs:
+                    for run in paragraph.runs:
+                        if run.text and re.sub(r'[ \t]', '', run.text) != "" and not (
+                                contains_only_punctuation(run.text.replace(" ", ""))):
+                            parts.append(run.text)
     return parts
 
 
 def write_text_to_docx(docx_file, translations, type):
     doc = Document(docx_file)
+    translated_index = 0
+
     for paragraph in doc.paragraphs:
         for run in paragraph.runs:
-            if run.text and re.sub(r'[ \t]', '', run.text) != "" and not (contains_only_punctuation(run.text.replace(" ", ""))):
-                if run.text in translations:
-                    run.text = translations[run.text]
+            if run.text and re.sub(r'[ \t]', '', run.text) != "" and not contains_only_punctuation(
+                    run.text.replace(" ", "")):
+                translation = translations[translated_index]
+                translated_index += 1
+
+                if run.text.startswith(' ') and not translation.startswith(' '):
+                    translation = ' ' + translation
+                if run.text.endswith(' ') and not translation.endswith(' '):
+                    translation += ' '
+                run.text = translation
+
+    for section in doc.sections:
+        header = section.header
+        for paragraph in header.paragraphs:
+            for run in paragraph.runs:
+                if run.text and re.sub(r'[ \t]', '', run.text) != "" and not (
+                        contains_only_punctuation(run.text.replace(" ", ""))):
+                    translation = translations[translated_index]
+                    translated_index += 1
+
+                    if run.text.startswith(' ') and not translation.startswith(' '):
+                        translation = ' ' + translation
+                    if run.text.endswith(' ') and not translation.endswith(' '):
+                        translation += ' '
+                    run.text = translation
+
+        footer = section.footer
+        for paragraph in footer.paragraphs:
+            for run in paragraph.runs:
+                if run.text and re.sub(r'[ \t]', '', run.text) != "" and not (
+                        contains_only_punctuation(run.text.replace(" ", ""))):
+                    translation = translations[translated_index]
+                    translated_index += 1
+
+                    if run.text.startswith(' ') and not translation.startswith(' '):
+                        translation = ' ' + translation
+                    if run.text.endswith(' ') and not translation.endswith(' '):
+                        translation += ' '
+                    run.text = translation
+
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for paragraph in cell.paragraphs:
+                    for run in paragraph.runs:
+                        if run.text and re.sub(r'[ \t]', '', run.text) != "" and not (
+                                contains_only_punctuation(run.text.replace(" ", ""))):
+                            translation = translations[translated_index]
+                            translated_index += 1
+
+                            if run.text.startswith(' ') and not translation.startswith(' '):
+                                translation = ' ' + translation
+                            if run.text.endswith(' ') and not translation.endswith(' '):
+                                translation += ' '
+                            run.text = translation
 
     file_path = create_path(".docx", type)
     relative_path = os.path.relpath(file_path, start="myprog")
