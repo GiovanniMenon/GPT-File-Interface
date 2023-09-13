@@ -184,7 +184,7 @@ function sendForm() {
 
 
         if (translate){
-                waiting_chat_traslate = true
+            waiting_chat_traslate = true
         }else{
             waiting_chat = true
         }
@@ -199,8 +199,10 @@ function sendForm() {
                     if (waiting_chat) waiting_chat = false
                     if (waiting_chat_traslate) waiting_chat_traslate = false
                 },
-            error: function() {
-                    waiting_alert()
+            error: function(error) {
+                     if (error.responseJSON && error.responseJSON.request_in_progress === true) {
+                        waiting_alert();
+                    }
                     if(waiting_chat) waiting_chat = false
                     if(waiting_chat_traslate) waiting_chat_traslate = false
                 }
@@ -224,6 +226,10 @@ function switchCont(element) {
 
     /*Model Selection*/
 function change_chat_model(element) {
+        if(waiting_chat){
+            waiting_alert()
+            return
+        }
         element.classList.add("btn-primary");
         element.classList.remove("bg-transparent");
         if(element.id === "GPT-3" ){
@@ -259,7 +265,7 @@ function clearPage()   {
         }
  
     /*Upload File Behaviour*/
-function checkFileSelected() {
+function upload_file_chat() {
         if(waiting_chat || waiting_chat_traslate){
             waiting_alert()
             return
@@ -312,8 +318,10 @@ function checkFileSelected() {
                     waiting_chat = false
                 }, 
                 error: function(error) {
+                    if (error.responseJSON && error.responseJSON.request_in_progress === true) {
+                        waiting_alert();
+                    }
                     waiting_chat = false;
-                    waiting_alert()
                     alert(error.responseJSON.error);
                 }
             });
@@ -325,7 +333,6 @@ function remFile(element){
             return
 
         }
-        
             $.ajax({
                     type: "POST",
                     url: "/remove_file",
@@ -514,15 +521,24 @@ $(document).ready(function() {
 
  // Lenguage Selection
     function change_trans_model(element) {
+        if(waiting_chat_traslate){
+            waiting_alert()
+            return
+        }
         element.classList.add("btn-primary");
         element.classList.remove("bg-transparent");
         if(element.id === "Google-AI" ){
             document.getElementById("GPT-AI").classList.add("bg-transparent");
             document.getElementById("GPT-AI").classList.remove("btn-primary");
         }else{
-           document.getElementById("Google-AI").classList.add("bg-transparent");
-           document.getElementById("Google-AI").classList.remove("btn-primary");
+
+           // document.getElementById("Google-AI").classList.add("bg-transparent");
+           // document.getElementById("Google-AI").classList.remove("btn-primary");
         }
+
+
+
+
             $.ajax({
                 type: "POST",
                 url: "/model_trans_api",
@@ -561,32 +577,26 @@ function change_translate_opt(element,opt) {
       button = document.getElementById("current_file_opt")
       button.textContent = opt + " "
 
+
 }
 
-function translate_file(type) {
+function translate_file() {
 
     if(waiting_chat || waiting_chat_traslate){
         waiting_alert()
         return
     }
 
-    let input
-    if(type === "text"){
-        input = document.getElementById('translate_file_input');
-        const fileExtension = input.files[0].name.split('.').pop().toLowerCase();
-         if (!allowedExtensionsFile.includes(fileExtension)){
-            alert("Estensione non consentita")
-            return
-        }
-    }else{
-    input = document.getElementById('translate_audio_input');
-    const fileExtension = input.files[0].name.split('.').pop().toLowerCase();
-     if (!allowedExtensionsAudio.includes(fileExtension)){
-            alert("Estensione non consentita")
-            return
-        }
 
-        
+    let input = document.getElementById('translate_file_input');
+    const fileExtension = input.files[0].name.split('.').pop().toLowerCase();
+    if (!allowedExtensionsFile.includes(fileExtension)){
+            alert("Estensione non consentita")
+            return
+        }
+    else if($('#current_file_opt').text().trim().toLowerCase() === 'documento' && fileExtension !== "docx"){
+            alert("Estensione non consentita")
+            return
     }
 
     if (!input.files.length) {
@@ -616,8 +626,11 @@ function translate_file(type) {
                 document.getElementById('cont_form_text').placeholder="Inserisci il testo da tradurre";
             }, 
             error: function(error) {
-                waiting_chat_traslate = false
-                alert(error.responseJSON.error);
+                if (error.responseJSON && error.responseJSON.request_in_progress === true) {
+                        waiting_alert();
+                    }
+                waiting_chat_traslate = false;
+
             }
         });
 }
@@ -719,8 +732,10 @@ function transcribe_audio(){
                 }
             }, 
             error: function(error) {
+                 if (error.responseJSON && error.responseJSON.request_in_progress === true) {
+                        waiting_alert();
+                    }
                 waiting_audio= false;
-                waiting_alert()
                 $('#progress_bar_State').text("Nessun Caricamento");
                 $('#progress_bar_audio').css("width" , 0 + '%')
                 alert(error.responseJSON.error);
@@ -742,26 +757,31 @@ function waiting_alert(){
 
 function showLoadingAnimation(){
 
+        let chat = document.getElementById("cont_chat");
+        let loading_element = chat.querySelector("#cont_ai_chat_tmp");
 
+        if (loading_element) {
+            return
+        }
         /* Nel caso di Stampa Inversa */
-    let element = $("#cont_chat").children();
-    $("#cont_chat").empty()
+        let element = $("#cont_chat").children();
+        $("#cont_chat").empty()
 
-    let safeFormTextVal = escapeHtml(form_text_val);
+        let safeFormTextVal = escapeHtml(form_text_val);
 
-    if(!translate && !audio){
-        let userText = $("<div>").attr("class", "row").attr("id", "cont_user_chat_tmp").html("<pre> <span class='text-primary'> -> | </span>" + safeFormTextVal + "</pre>");
-        $("#cont_chat").append(userText);
+        if (!translate && !audio) {
+            let userText = $("<div>").attr("class", "row").attr("id", "cont_user_chat_tmp").html("<pre> <span class='text-primary'> -> | </span>" + safeFormTextVal + "</pre>");
+            $("#cont_chat").append(userText);
         }
 
-    let aiText = $("<div>").attr("class", "row bg-light-subtle rounded-3 p-3 shadow mt-2").attr("id", "cont_ai_chat_tmp").html("<pre id='span_tmp'> " + " </pre>");
+        let aiText = $("<div>").attr("class", "row bg-light-subtle rounded-3 p-3 shadow mt-2").attr("id", "cont_ai_chat_tmp").html("<pre id='span_tmp'> " + " </pre>");
 
-    $("#cont_chat").append(aiText);
-    $("#cont_chat").append(element);
+        $("#cont_chat").append(aiText);
+        $("#cont_chat").append(element);
 }
 
 window.onbeforeunload = function(event) {
-    if(waiting_chat || waiting_audio || waiting_chat_traslate){
+    if(waiting_chat || waiting_audio || waiting_chat_traslate ){
         event.returnValue = 'Stai lasciando la pagina prima che una delle tue richieste sia stata completata.';
     }
 };
