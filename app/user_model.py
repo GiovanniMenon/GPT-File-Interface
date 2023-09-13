@@ -12,12 +12,12 @@ class User(db.Model, UserMixin):
     has_chat_request_in_progress = db.Column(db.Boolean, default=False)
     has_audio_request_in_progress = db.Column(db.Boolean, default=False)
 
-    elements_chat = db.Column(JSON)
-    elements_translate = db.Column(JSON)
-    elements_audio = db.Column(JSON)
+    user_elements_chat = db.Column(JSON)
+    user_elements_translate = db.Column(JSON)
+    user_elements_audio = db.Column(JSON)
 
-    file_context = db.Column(JSON)
-    context = db.Column(JSON)
+    user_file_in_context = db.Column(JSON)
+    user_context = db.Column(JSON)
 
     def __init__(self, username, password):
         self.username = username

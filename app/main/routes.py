@@ -12,22 +12,22 @@ main = Blueprint('main', __name__)
 
 
 def updateDb():
-    current_user.elements_chat = session['ELEMENTS_CHAT']
-    current_user.elements_translate = session['ELEMENTS_TRANSLATE']
-    current_user.elements_audio = session['ELEMENTS_AUDIO']
+    current_user.user_elements_chat = session['ELEMENTS_CHAT']
+    current_user.user_elements_translate = session['ELEMENTS_TRANSLATE']
+    current_user.user_elements_audio = session['ELEMENTS_AUDIO']
 
-    current_user.file_context = session['FILE_CONTEXT']
-    current_user.context = session['CONTEXT']
+    current_user.user_file_in_context = session['FILE_CONTEXT']
+    current_user.user_context = session['CONTEXT']
     db.session.commit()
 
 
 def updateSession():
-    session['ELEMENTS_CHAT'] = current_user.elements_chat
-    session['ELEMENTS_TRANSLATE'] = current_user.elements_translate
-    session['ELEMENTS_AUDIO'] = current_user.elements_audio
+    session['ELEMENTS_CHAT'] = current_user.user_elements_chat
+    session['ELEMENTS_TRANSLATE'] = current_user.user_elements_translate
+    session['ELEMENTS_AUDIO'] = current_user.user_elements_audio
 
-    session['FILE_CONTEXT'] = current_user.file_context
-    session['CONTEXT'] = current_user.context
+    session['FILE_CONTEXT'] = current_user.user_file_in_context
+    session['CONTEXT'] = current_user.user_context
 
 
 @main.route('/', methods=["GET", "POST"])
@@ -43,28 +43,28 @@ def home():
         session['INFORMATION'] = {"Num_Message": 0, "Num_Token": 0}
         session.modified = True
 
-    if current_user.elements_audio:
-        session['ELEMENTS_AUDIO'] = current_user.elements_audio
+    if current_user.user_elements_audio:
+        session['ELEMENTS_AUDIO'] = current_user.user_elements_audio
     else:
         session['ELEMENTS_AUDIO'] = []
     session.modified = True
-    if current_user.elements_translate:
-        session['ELEMENTS_TRANSLATE'] = current_user.elements_translate
+    if current_user.user_elements_translate:
+        session['ELEMENTS_TRANSLATE'] = current_user.user_elements_translate
     else:
         session['ELEMENTS_TRANSLATE'] = []
     session.modified = True
-    if current_user.elements_chat:
-        session['ELEMENTS_CHAT'] = current_user.elements_chat
+    if current_user.user_elements_chat:
+        session['ELEMENTS_CHAT'] = current_user.user_elements_chat
     else:
         session['ELEMENTS_CHAT'] = []
     session.modified = True
-    if current_user.file_context:
-        session['FILE_CONTEXT'] = current_user.file_context
+    if current_user.user_file_in_context:
+        session['FILE_CONTEXT'] = current_user.user_file_in_context
     else:
         session['FILE_CONTEXT'] = []
     session.modified = True
-    if current_user.context:
-        session['CONTEXT'] = current_user.context
+    if current_user.user_context:
+        session['CONTEXT'] = current_user.user_context
     else:
         session['CONTEXT'] = [{'role': "system", 'content': "Sei un assistente, hai il compito di rispondere alle mie "
                                                             "domande,"
@@ -132,19 +132,23 @@ def text_form_response():
 
         if translate == "true":
             response = translate_manager(text, session['LANGUAGE_OPTION_CHOOSE'], session['MODEL_TRANS_MODEL'])
+
             session['ELEMENTS_TRANSLATE'].append({'response_text': decode(response)})
             session.modified = True
+
             data['elements'] = session['ELEMENTS_TRANSLATE']
             data['section'] = 'translate_sidebar'
         else:
             response = chat_text_call(text)
+
             session['ELEMENTS_CHAT'].append({'user_text': escaped_text, 'response_text': decode(response)})
+            session.modified = True
 
             data['elements'] = session['ELEMENTS_CHAT']
             data['section'] = 'chat_sidebar'
 
-            updateDb()
-            return jsonify(data)
+        updateDb()
+        return jsonify(data)
     finally:
         current_user.has_chat_request_in_progress = False
         db.session.commit()
@@ -356,7 +360,7 @@ def translate_file_response():
             'file': session['FILE_CONTEXT'],
             'information': session["INFORMATION"]
         }
-        current_user.elements_translate = session['ELEMENTS_TRANSLATE']
+        current_user.user_elements_translate = session['ELEMENTS_TRANSLATE']
         db.session.commit()
 
         updateDb()
@@ -395,7 +399,8 @@ def transcribe_audio_response():
             'information': session["INFORMATION"]
         }
 
-        current_user.elements_audio = session['ELEMENTS_AUDIO']
+        current_user.user_elements_audio = session['ELEMENTS_AUDIO']
+
         db.session.commit()
         return jsonify(data)
     except Exception as e:
