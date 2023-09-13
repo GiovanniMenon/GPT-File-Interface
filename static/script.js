@@ -413,7 +413,7 @@ function update_elements(response){
                 $("#cont_chat").append(userText);
             }
             if(element.response_text){
-                var aiText = $("<div>").attr("class" ,"row bg-light-subtle rounded-3 p-3 shadow mt-2").attr("id", "cont_ai_chat").html("<pre>" + element.response_text + "</pre>");
+                var aiText = $("<div>").attr("class" ,"row bg-body rounded-3 p-3 shadow mt-2").attr("id", "cont_ai_chat").html("<pre>" + element.response_text + "</pre>");
                 $("#cont_chat").append(aiText);
             }
             
@@ -774,7 +774,7 @@ function showLoadingAnimation(){
             $("#cont_chat").append(userText);
         }
 
-        let aiText = $("<div>").attr("class", "row bg-light-subtle rounded-3 p-3 shadow mt-2").attr("id", "cont_ai_chat_tmp").html("<pre id='span_tmp'> " + " </pre>");
+        let aiText = $("<div>").attr("class", "row bg-body rounded-3 p-3 shadow mt-2").attr("id", "cont_ai_chat_tmp").html("<pre id='span_tmp'> " + " </pre>");
 
         $("#cont_chat").append(aiText);
         $("#cont_chat").append(element);
