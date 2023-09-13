@@ -9,9 +9,13 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
 
+    has_chat_request_in_progress = db.Column(db.Boolean, default=False)
+    has_audio_request_in_progress = db.Column(db.Boolean, default=False)
+
     elements_chat = db.Column(JSON)
     elements_translate = db.Column(JSON)
     elements_audio = db.Column(JSON)
+
     file_context = db.Column(JSON)
     context = db.Column(JSON)
 

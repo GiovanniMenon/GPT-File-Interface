@@ -1,4 +1,3 @@
-
 from app.utils.openai_utils import chat_text_call
 from flask import render_template, request, jsonify, redirect, url_for
 from flask_login import login_required, current_user, logout_user
@@ -8,12 +7,8 @@ from app.utils.message_utils import *
 from app.utils.manager_utils import *
 from flask import Blueprint
 
-import threading
-import time
 
 main = Blueprint('main', __name__)
-user_locks = {}
-user_audio_locks = {}
 
 
 def updateDb():
@@ -116,79 +111,76 @@ def get_elements():
 @main.route('/process_form', methods=["GET", "POST"])
 @login_required
 def text_form_response():
-    user_id = session["ID_USER"]
 
-    if user_id not in user_locks:
-        user_locks[user_id] = threading.Lock()
+    if current_user and current_user.has_chat_request_in_progress:
+        return jsonify(
+            {"message": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
 
-    if user_locks[user_id].locked():
-        return jsonify({"message": "Un'altra richiesta è in corso per questo utente."}), 400
+    current_user.has_chat_request_in_progress = True
+    db.session.commit()
 
-    with user_locks.setdefault(user_id, threading.Lock()):
-        try:
-            text = request.form.get('text')
-            escaped_text = escape(text)
+    try:
+        text = request.form.get('text')
+        escaped_text = escape(text)
 
-            translate = request.form.get('translate')
+        translate = request.form.get('translate')
 
-            data = {
-                'file': session['FILE_CONTEXT'],
-                'information': session['INFORMATION']
-            }
+        data = {
+            'file': session['FILE_CONTEXT'],
+            'information': session['INFORMATION']
+        }
 
-            if translate == "true":
-                response = translate_manager(text, session['LANGUAGE_OPTION_CHOOSE'])
-                session['ELEMENTS_TRANSLATE'].append({'response_text': decode(response)})
-                session.modified = True
-                data['elements'] = session['ELEMENTS_TRANSLATE']
-                data['section'] = 'translate_sidebar'
+        if translate == "true":
+            response = translate_manager(text, session['LANGUAGE_OPTION_CHOOSE'], session['MODEL_TRANS_MODEL'])
+            session['ELEMENTS_TRANSLATE'].append({'response_text': decode(response)})
+            session.modified = True
+            data['elements'] = session['ELEMENTS_TRANSLATE']
+            data['section'] = 'translate_sidebar'
+        else:
+            response = chat_text_call(text)
+            session['ELEMENTS_CHAT'].append({'user_text': escaped_text, 'response_text': decode(response)})
 
-            else:
-                response = chat_text_call(text)
-                session['ELEMENTS_CHAT'].append({'user_text': escaped_text, 'response_text': decode(response)})
-
-                data['elements'] = session['ELEMENTS_CHAT']
-                data['section'] = 'chat_sidebar'
+            data['elements'] = session['ELEMENTS_CHAT']
+            data['section'] = 'chat_sidebar'
 
             updateDb()
             return jsonify(data)
-        finally:
-            # Rimuovi il blocco dell'utente quando la richiesta è completata
-            user_locks.pop(user_id, None)
+    finally:
+        current_user.has_chat_request_in_progress = False
+        db.session.commit()
 
 
 @main.route('/upload_file', methods=['POST'])
 @login_required
 def upload_file():
-    user_id = session["ID_USER"]
 
-    if user_id not in user_locks:
-        user_locks[user_id] = threading.Lock()
+    if current_user and current_user.has_chat_request_in_progress:
+        return jsonify(
+            {"message": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
 
-    if user_locks[user_id].locked():
-        return jsonify({"message": "Un'altra richiesta è in corso per questo utente."}), 400
-    with user_locks.setdefault(user_id, threading.Lock()):
-        try:
-            try:
-                uploaded_files = request.files.getlist('file[]')
-                for file in uploaded_files:
-                    if file.filename != '' and file:
-                        file_manager(file, "chat")
-                        updateDb()
-                data = {
-                    'section': "chat_sidebar",
-                    'elements': session['ELEMENTS_CHAT'],
-                    'file': session['FILE_CONTEXT'],
-                    'information': session["INFORMATION"]
-                }
+    current_user.has_chat_request_in_progress = True
+    db.session.commit()
 
-                return jsonify(data)
-            except Exception as e:
-                print(f"Errore durante l'estrazione del contenuto del file: {str(e)}")
-                return jsonify({"error": "Errore nel caricamento del file.\nFile non caricato.\n" + str(e)}), 500
-        finally:
-            # Rimuovi il blocco dell'utente quando la richiesta è completata
-            user_locks.pop(user_id, None)
+    try:
+        uploaded_files = request.files.getlist('file[]')
+        for file in uploaded_files:
+            if file.filename != '' and file:
+                file_manager(file, "chat")
+                updateDb()
+        data = {
+            'section': "chat_sidebar",
+            'elements': session['ELEMENTS_CHAT'],
+            'file': session['FILE_CONTEXT'],
+            'information': session["INFORMATION"]
+        }
+
+        return jsonify(data)
+    except Exception as e:
+        print(f"Errore durante l'estrazione del contenuto del file: {str(e)}")
+        return jsonify({"error": "Errore nel caricamento del file.\nFile non caricato.\n" + str(e)}), 500
+    finally:
+        current_user.has_chat_request_in_progress = False
+        db.session.commit()
 
 
 @main.route('/model_chat_api', methods=['POST'])
@@ -233,8 +225,8 @@ def clear_elements():
             print(f"Errore nella eliminazione dei file: {str(e)}")
             return jsonify({"error": "Errore nella eliminazione dei file:\n" + str(e)}), 500
     except Exception as e:
-            print(f"Errore nella pulizia della chat: {str(e)}")
-            return jsonify({"error": "Errore nella pulizia della chat:\n" + str(e)}), 500
+        print(f"Errore nella pulizia della chat: {str(e)}")
+        return jsonify({"error": "Errore nella pulizia della chat:\n" + str(e)}), 500
 
 
 @main.route('/clear_context', methods=['POST'])
@@ -270,58 +262,48 @@ def clear_context():
 @main.route('/remove_file', methods=['POST'])
 @login_required
 def remove_file():
-    user_id = session["ID_USER"]
 
-    if user_id not in user_locks:
-        user_locks[user_id] = threading.Lock()
+    try:
+        new_context = []
+        new_file_context = []
 
-    if user_locks[user_id].locked():
-        return jsonify({"message": "Un'altra richiesta è in corso per questo utente."}), 400
-    with user_locks.setdefault(user_id, threading.Lock()):
-        try:
-            try:
-                new_context = []
-                new_file_context = []
+        for file in session['FILE_CONTEXT']:
+            if request.form.get('file') not in file["file"]:
+                new_file_context.append(file)
 
-                for file in session['FILE_CONTEXT']:
-                    if request.form.get('file') not in file["file"]:
-                        new_file_context.append(file)
+        session['FILE_CONTEXT'] = new_file_context
+        session.modified = True
 
-                session['FILE_CONTEXT'] = new_file_context
-                session.modified = True
+        for cont in session['CONTEXT']:
+            if request.form.get('file') not in cont["content"]:
+                new_context.append(cont)
 
-                for cont in session['CONTEXT']:
-                    if request.form.get('file') not in cont["content"]:
-                        new_context.append(cont)
+        session['CONTEXT'] = new_context
+        session['ELEMENTS_CHAT'].append(
+            {'response_text': "<p class='w-100 text-center my-auto'> " + request.form.get(
+                'file') + " <span class='fs-6 fw-bold'>rimosso</span> dal contexto della Chat.</p>",
+             'file_context': request.form.get('file')})
+        session.modified = True
+        data = {
+            "section": "chat_sidebar",
+            'elements': session['ELEMENTS_CHAT'],
+            'file': session['FILE_CONTEXT'],
+            'information': session["INFORMATION"]
+        }
 
-                session['CONTEXT'] = new_context
-                session['ELEMENTS_CHAT'].append(
-                    {'response_text': "<p class='w-100 text-center my-auto'> " + request.form.get(
-                        'file') + " <span class='fs-6 fw-bold'>rimosso</span> dal contexto della Chat.</p>",
-                     'file_context': request.form.get('file')})
-                session.modified = True
-                data = {
-                    "section": "chat_sidebar",
-                    'elements': session['ELEMENTS_CHAT'],
-                    'file': session['FILE_CONTEXT'],
-                    'information': session["INFORMATION"]
-                }
-
-                updateDb()
-                return jsonify(data)
-            except Exception as e:
-                print(f"Errore : {str(e)}")
-                return jsonify({"error": "Errore nella pulizia del contexto"}), 500
-        finally:
-            # Rimuovi il blocco dell'utente quando la richiesta è completata
-            user_locks.pop(user_id, None)
+        updateDb()
+        return jsonify(data)
+    except Exception as e:
+        print(f"Errore : {str(e)}")
+        return jsonify({"error": "Errore nella pulizia del contexto"}), 500
 
 
 @main.route('/get_token', methods=['POST'])
 @login_required
 def get_token():
     try:
-        return jsonify({"token": num_tokens_from_messages(request.form.get('text', session["MODEL_API_OPTION_CHOOSE"]))})
+        return jsonify(
+            {"token": num_tokens_from_messages(request.form.get('text', session["MODEL_API_OPTION_CHOOSE"]))})
     except Exception as e:
         print(f"Errore : {str(e)}")
         return jsonify({"error": "Errore nel calcolo dei token"}), 500
@@ -355,36 +337,36 @@ def change_lang():
 
 @main.route("/translate_file", methods=['POST'])
 def translate_file_response():
-    user_id = session["ID_USER"]
 
-    if user_id not in user_locks:
-        user_locks[user_id] = threading.Lock()
+    if current_user and current_user.has_chat_request_in_progress:
+        return jsonify(
+            {"message": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
 
-    if user_locks[user_id].locked():
-        return jsonify({"message": "Un'altra richiesta è in corso per questo utente."}), 400
-    with user_locks.setdefault(user_id, threading.Lock()):
-        try:
-            try:
-                file = request.files['file']
-                file_manager(file, "translate", request.form.get('opt'))
+    current_user.has_chat_request_in_progress = True
+    db.session.commit()
 
-                data = {
-                    'section': "translate_sidebar",
-                    'elements': session['ELEMENTS_TRANSLATE'],
-                    'file': session['FILE_CONTEXT'],
-                    'information': session["INFORMATION"]
-                }
-                current_user.elements_translate = session['ELEMENTS_TRANSLATE']
-                db.session.commit()
+    try:
+        file = request.files['file']
+        print(request.form.get('opt'))
+        file_manager(file, "translate", request.form.get('opt'))
 
-                updateDb()
-                return jsonify(data)
-            except Exception as e:
-                print(f"Errore : {str(e)}")
-                return jsonify({"error": "Errore durante la traduzione dei file"}), 500
-        finally:
-            # Rimuovi il blocco dell'utente quando la richiesta è completata
-            user_locks.pop(user_id, None)
+        data = {
+            'section': "translate_sidebar",
+            'elements': session['ELEMENTS_TRANSLATE'],
+            'file': session['FILE_CONTEXT'],
+            'information': session["INFORMATION"]
+        }
+        current_user.elements_translate = session['ELEMENTS_TRANSLATE']
+        db.session.commit()
+
+        updateDb()
+        return jsonify(data)
+    except Exception as e:
+        print(f"Errore : {str(e)}")
+        return jsonify({"error": "Errore durante la traduzione dei file"}), 500
+    finally:
+        current_user.has_chat_request_in_progress = False
+        db.session.commit()
 
 
 # ===============================================
@@ -392,53 +374,36 @@ def translate_file_response():
 
 @main.route("/transcribe_audio", methods=['POST'])
 def transcribe_audio_response():
-    user_id = session["ID_USER"]
 
-    if user_id not in user_audio_locks:
-        user_audio_locks[user_id] = threading.Lock()
+    if current_user and current_user.has_audio_request_in_progress:
+        return jsonify(
+            {"message": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
 
-    if user_audio_locks[user_id].locked():
-        return jsonify({"message": "Un'altra richiesta è in corso per questo utente."}), 400
-    with user_audio_locks.setdefault(user_id, threading.Lock()):
-        try:
-            try:
-                file = request.files['file']
+    current_user.has_audio_request_in_progress = True
+    db.session.commit()
 
-                file_manager(file, 'audio', request.form.get('transcriptionOption'), request.form.get('translationLanguage'))
+    try:
+        file = request.files['file']
 
-                data = {
-                    'section': "audio_sidebar",
-                    'elements': session['ELEMENTS_AUDIO'],
-                    'file': session['FILE_CONTEXT'],
-                    'information': session["INFORMATION"]
-                }
-                current_user.elements_audio = session['ELEMENTS_AUDIO']
-                db.session.commit()
-                return jsonify(data)
-            except Exception as e:
-                print(f"Errore : {str(e)}")
-                return jsonify({"error": "Errore durante la trascrizione dei file"}), 500
-        finally:
-            # Rimuovi il blocco dell'utente quando la richiesta è completata
-            user_audio_locks.pop(user_id, None)
+        file_manager(file, 'audio', request.form.get('transcriptionOption'),
+                     request.form.get('translationLanguage'))
 
+        data = {
+            'section': "audio_sidebar",
+            'elements': session['ELEMENTS_AUDIO'],
+            'file': session['FILE_CONTEXT'],
+            'information': session["INFORMATION"]
+        }
 
-# ===============================================
-# Cluster
-
-@main.route("/embedded_file", methods=['POST'])
-def embedded_file_response():
-    file = request.files['file']
-
-    file_manager(file, "embedded")
-
-    data = {
-        'elements': session['ELEMENTS_CHAT'],
-        'file': session['FILE_CONTEXT'],
-        'information': session["INFORMATION"]
-    }
-    updateDb()
-    return jsonify(data)
+        current_user.elements_audio = session['ELEMENTS_AUDIO']
+        db.session.commit()
+        return jsonify(data)
+    except Exception as e:
+        print(f"Errore : {str(e)}")
+        return jsonify({"error": "Errore durante la trascrizione dei file"}), 500
+    finally:
+        current_user.has_audio_request_in_progress = False
+        db.session.commit()
 
 
 @login_manager.unauthorized_handler

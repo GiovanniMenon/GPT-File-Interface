@@ -2,8 +2,8 @@
 import openai
 import os
 from flask import session
-
-MAX_TRIES = 3
+import time
+MAX_TRIES = 4
 openai.api_key = os.getenv('API_KEY')
 
 
@@ -38,7 +38,7 @@ def chat_text_call(text):
                 return f"Errore nella richiesta\n{str(e)}"
 
 
-def translate_text_call(lang, text):
+def translate_text_with_gpt(lang, text):
     for attempt in range(MAX_TRIES):
         try:
             context_translate = [
@@ -71,7 +71,7 @@ def translate_text_call(lang, text):
                 return f"Errore nella richiesta\n{str(e)}"
 
 
-def transcribe(file_path):
+def transcribe_with_whisper(file_path):
     try:
         audio_file = open(file_path, "rb")
         transcript = openai.Audio.transcribe("whisper-1", audio_file)
@@ -117,27 +117,35 @@ def audio_text_call(scope, text):
 
 
 def translate_document_text_call(lang, part):
-    try:
-        context_translate = [
-            {"role": "system",
-             'content': (f"You are a machine translator for {lang}. You are tasked with translating content from a "
-                         f"file, which may include both full texts and individual words. Translate the following "
-                         f"verbatim, without interpretation. It's crucial to preserve the original punctuation and "
-                         f"structure in the translation, as the consistency of the file's content must be maintained. "
-                         f"Do not add, omit, or alter any information."
-                         )},
-            {"role": "user", "content": part}
-        ]
-        completion = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-16k-0613",
-            messages=[
-                {
-                    'role': cont['role'],
-                    'content': cont['content']
-                } for cont in context_translate
+    for attempt in range(MAX_TRIES):
+        try:
+            context_translate = [
+                {"role": "system",
+                 'content': (f"You are a machine translator for {lang}. You are tasked with translating content from a "
+                             f"file, which may include both full texts and individual words. Translate the following "
+                             f"verbatim, without interpretation. It's crucial to preserve the original punctuation and "
+                             f"structure in the translation, as the consistency of the file's content must be maintained. "
+                             f"Do not add, omit, or alter any information."
+                             )},
+                {"role": "user", "content": part}
+            ]
+            time.sleep(0.5)
+            completion = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo-16k-0613",
+                messages=[
+                    {
+                        'role': cont['role'],
+                        'content': cont['content']
+                    } for cont in context_translate
 
-            ])
-        return part, completion.choices[0].message["content"]
-    except Exception as e:
-        print(f"Errore : {str(e)}")
-        return "Errore nella richiesta\n" + str(e)
+                ])
+
+            return completion.choices[0].message["content"]
+        except Exception as e:
+            if 'Bad gateway' in str(e) and attempt < MAX_TRIES - 1:
+                continue
+            print(f"Errore : {str(e)}")
+            if 'Bad gateway' in str(e):
+                return f"Errore : Bad gateway. Massimo numero di tentativi ({MAX_TRIES}) raggiunto."
+            else:
+                return f"Errore nella richiesta\n{str(e)}"
