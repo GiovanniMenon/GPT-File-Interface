@@ -87,21 +87,49 @@ def file_audio_builder(text, audio_opt, audio_lang):
                                                style='display:block;' download> <pre> Scarica la Trascrizione : " +
                                                            " <i class='fa-solid fa-file'></i></pre> </a>"})
         else:
-
-            result = ""
             if audio_opt == 'Traduzione':
                 segments = split_text_into_sections(text, 3500)
-                with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+
+                with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
                     translate_call_with_lang = functools.partial(translate_text_with_gpt, audio_lang)
-                    results = executor.map(translate_call_with_lang, segments)
-                    result = ''.join(results)
+
+                    futures = [executor.submit(translate_call_with_lang, segment) for segment in segments]
+
+                    translate_transcript = []
+                    count = 0
+
+                    for future in futures:
+                        try:
+                            translate_transcript.append(future.result(timeout=140))
+                            count += 1
+                            print(f"Trascritti {count} di {len(segments)} elementi.")
+                        except Exception as e:
+                            executor.shutdown(wait=False, cancel_futures=True)
+                            print(f"Errore durante la traduzione: {str(e)}")
+                            return -1
+
+                    result = ''.join(translate_transcript)
 
             else:
                 segments = split_text_into_sections(text, 13000)
-                with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-                    translate_call_with_lang = functools.partial(audio_text_call, audio_opt)
-                    results = executor.map(audio_text_call, segments)
-                    result = ''.join(results)
+
+                with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+                    translate_call_with_opt = functools.partial(audio_text_call, audio_opt)
+                    futures = [executor.submit(translate_call_with_opt, segment) for segment in segments]
+
+                    transcripts = []
+                    count = 0
+
+                    for future in futures:
+                        try:
+                            transcripts.append(future.result(timeout=140))
+                            count += 1
+                            print(f"Trascritti {count} di {len(segments)} elementi.")
+                        except Exception as e:
+                            executor.shutdown(wait=False, cancel_futures=True)
+                            print(f"Errore durante la traduzione: {str(e)}")
+                            return -1
+                    result = ''.join(transcripts)
 
             words = result.split()
             result_print = " ".join(words[:100]) + " ...." if len(words) > 100 else result

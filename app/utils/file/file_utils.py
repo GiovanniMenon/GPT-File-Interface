@@ -84,13 +84,6 @@ def log_context_to_file(file_path, context):
         json.dump(data, file, indent=4)
 
 
-def performance(filename, lang, time):
-    elapsed_time_formatted = "{:.4f}".format(time)
-    data = f"{filename} | {lang} | {elapsed_time_formatted} s|\n"
-    with open("performance.txt", "a") as file:
-        file.write(data)
-
-
 def clear_file_folder(folder_path):
     if not os.path.exists(folder_path):
         print(f"La cartella {folder_path} non esiste.")
