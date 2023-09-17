@@ -1,6 +1,9 @@
 import re
 from googletrans import Translator
 
+# Da rimuovere
+
+
 def get_language_code(language_name):
     language_map = {
         "Chinese": "zh",
