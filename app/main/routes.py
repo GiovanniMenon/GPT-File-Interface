@@ -25,12 +25,17 @@ def updateDb():
 
 
 def updateSession():
-    session['ELEMENTS_CHAT'] = current_user.user_elements_chat
-    session['ELEMENTS_TRANSLATE'] = current_user.user_elements_translate
-    session['ELEMENTS_AUDIO'] = current_user.user_elements_audio
+    if current_user.user_elements_chat is not None:
+        session['ELEMENTS_CHAT'] = current_user.user_elements_chat
+    if current_user.user_elements_translate is not None:
+        session['ELEMENTS_TRANSLATE'] = current_user.user_elements_translate
+    if current_user.user_elements_audio is not None:
+        session['ELEMENTS_AUDIO'] = current_user.user_elements_audio
+    if current_user.user_file_in_context is not None:
+        session['FILE_CONTEXT'] = current_user.user_file_in_context
+    if current_user.user_context is not None:
+        session['CONTEXT'] = current_user.user_context
 
-    session['FILE_CONTEXT'] = current_user.user_file_in_context
-    session['CONTEXT'] = current_user.user_context
 
 
 @main.route('/', methods=["GET", "POST"])
@@ -42,37 +47,34 @@ def home():
     session.setdefault('LANGUAGE_OPTION_CHOOSE', 'English')
     session.setdefault('MODEL_TRANS_MODEL', 'CHAT-AI')
 
+    session['ELEMENTS_TRANSLATE'] = []
+    session['ELEMENTS_AUDIO'] = []
+    session['ELEMENTS_CHAT'] = []
+    session['FILE_CONTEXT'] = []
+    session['CONTEXT'] = [{'role': "system", 'content': "Sei un assistente, hai il compito di rispondere alle mie "
+                                                        "domande,"
+                                                        "eseguire i miei ordini e di aprire i link che ti mando."}]
+    session.modified = True
+
     if 'INFORMATION' not in session:
         session['INFORMATION'] = {"Num_Message": 0, "Num_Token": 0}
         session.modified = True
 
     if current_user.user_elements_audio:
         session['ELEMENTS_AUDIO'] = current_user.user_elements_audio
-    else:
-        session['ELEMENTS_AUDIO'] = []
-    session.modified = True
+        session.modified = True
     if current_user.user_elements_translate:
         session['ELEMENTS_TRANSLATE'] = current_user.user_elements_translate
-    else:
-        session['ELEMENTS_TRANSLATE'] = []
-    session.modified = True
+        session.modified = True
     if current_user.user_elements_chat:
         session['ELEMENTS_CHAT'] = current_user.user_elements_chat
-    else:
-        session['ELEMENTS_CHAT'] = []
-    session.modified = True
+        session.modified = True
     if current_user.user_file_in_context:
         session['FILE_CONTEXT'] = current_user.user_file_in_context
-    else:
-        session['FILE_CONTEXT'] = []
-    session.modified = True
     if current_user.user_context:
         session['CONTEXT'] = current_user.user_context
-    else:
-        session['CONTEXT'] = [{'role': "system", 'content': "Sei un assistente, hai il compito di rispondere alle mie "
-                                                            "domande,"
-                                                            "eseguire i miei ordini e di aprire i link che ti mando."}]
-    session.modified = True
+        session.modified = True
+
     if len(session['ELEMENTS_CHAT']) > 0 or len(session['FILE_CONTEXT']) > 0:
         return render_template('index.html', elements=session['ELEMENTS_CHAT'], file_context=session['FILE_CONTEXT'],
                                information=session['INFORMATION'], user=current_user.username,
@@ -104,7 +106,6 @@ def get_elements():
 
         if elements in elements_map:
             data['elements'] = session.get(elements_map[elements], None)
-
         return jsonify(data)
     except Exception as e:
         print(f"Errore : {str(e)}")
@@ -114,7 +115,6 @@ def get_elements():
 @main.route('/process_form', methods=["GET", "POST"])
 @login_required
 def text_form_response():
-
     if current_user and current_user.has_chat_request_in_progress:
         return jsonify(
             {"error": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
@@ -122,8 +122,8 @@ def text_form_response():
     current_user.has_chat_request_in_progress = True
     db.session.commit()
 
-      
     try:
+
         text = request.form.get('text')
         escaped_text = escape(text)
 
@@ -154,9 +154,9 @@ def text_form_response():
         updateDb()
             
         return jsonify(data)
-    except Exception as e:
-        print(f"Errore generico nella text form response: {str(e)}")
-        return jsonify({"error": "Errore generico nella text response" + str(e)}), 500   
+    #except Exception as e:
+        #print(f"Errore generico nella text form response: {str(e)}")
+        #return jsonify({"error": "Errore generico nella text response" + str(e)}), 500
     finally:
         current_user.has_chat_request_in_progress = False
         db.session.commit()
