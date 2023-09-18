@@ -126,21 +126,16 @@
     </div>
 
     <div class="d-flex flex-column position-absolute p-1 h-100 bg-body-tertiary shadow-lg align-items-center my-hidden" id="translate_sidebar">
-            <div class="mt-3" id="lang_file_model">
-                  <div class="container-fluid bg-light-subtle p-3 rounded-3 shadow-lg ">
-                    <button class="btn btn-md custom-btn btn-primary" id="GPT-AI" value="GPT-AI"  onclick="change_trans_model(this)">GPT AI</button>
-                </div>
-            </div>
-            <div class="row w-100 text-center p-2 mt-auto">
+            <div class="row w-100 text-center p-2 mt-auto ">
                         <p class="fs-4 custom-fs fw-bold"> Traduci un File</p>
                         <hr>
-                        <input type="file" class="form-control form-control-md pe-0 mb-3 mt-4" id="translate_file_input" >
+                        <input type="file" class="form-control form-control-md pe-0 my-3 mt-5 " id="translate_file_input" >
 
                         <button class="btn btn-md custom-btn btn-primary  " onclick="translate_file()" accept=".docx, .txt, .pdf">Traduci</button>
                         <div class="form-text fst-italic" id="basic-addon4">.docx , .pdf , .txt</div>
             </div>
             <hr>
-              <div class="dropup-center dropup bottom-0 mb-auto" id="lang_file_opt">
+              <div class="dropup-center dropup bottom-0 mt-3 " id="lang_file_opt">
                   <button id="current_file_opt" class="btn btn-dark dropdown-toggle btn-md custom-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">Testo</button>
                               <ul class="dropdown-menu">
                                   <li><button class="dropdown-item" value="Documento" title="documento" onclick="change_translate_opt(this,'Documento')">Documento <i>(solo .docx)</i></button></li>
@@ -148,9 +143,7 @@
                               </ul>
               </div>
 
-
-
-            <div class="dropup-center dropup bottom-0 mb-2" id="lang_menu">
+            <div class="dropup-center dropup bottom-0 mt-5 mb-auto" id="lang_menu">
                 <button id="current_lang" class="btn btn-secondary dropdown-toggle btn-md custom-btn current_lang" type="button" data-bs-toggle="dropdown" aria-expanded="false">{% if lang %}{{lang}}{% endif %}</button>
                 <ul class="dropdown-menu">
                         <li class="p-2">
@@ -180,6 +173,13 @@
                         </div>
                 </ul>
             </div>
+            <div class="row w-75 mx-auto text-center mb-3">
+                <span class="mb-3 fs-6 custom-fs" id="progress_bar_trans_State">Nessun Caricamento</span>
+                <div class="progress w-100 p-0" role="progressbar" aria-label="Basic example" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="height: 7px">
+                  <div class="progress-bar" id="progress_bar_trans" style="width: 0%;"></div>
+                </div>
+            </div>
+
     </div>
 
     <div class="d-flex flex-column position-absolute p-1 h-100 bg-body-tertiary shadow-lg align-items-center my-hidden" id="audio_sidebar">
@@ -235,13 +235,13 @@
                         </div>
                 </ul>
             </div>
-            <div class="row w-75 mx-auto text-center mb-5">
-                <span class="mb-3 fs-6 custom-fs" id="progress_bar_State">Nessun Caricamento</span>
+            <div class="row w-75 mx-auto text-center mb-3">
+                <span class="mb-3 fs-6 custom-fs" id="progress_bar_audio_State">Nessun Caricamento</span>
                 <div class="progress w-100 p-0" role="progressbar" aria-label="Basic example" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="height: 7px">
                   <div class="progress-bar" id="progress_bar_audio" style="width: 0%;"></div>
                 </div>
+                </div>
             </div>
-    </div>
 
 
 
@@ -279,7 +279,7 @@
                 <a  class="nav-link py-3 mt-auto link-body-emphasis"  data-bs-placement="bottom" aria-label="User" data-bs-original-title="User">
                 <i class="fa-solid fa-right-from-bracket fs-5"></i>
                 <br>
-                  <span id="username" class="fs-6">  {{user}} </span>
+                  <span id="username" data-value='{{ user_id }}' class="fs-6">  {{user}} </span>
                </a>
               </li>
           </ul>
