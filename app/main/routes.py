@@ -1,5 +1,6 @@
+
 from app.utils.openai_utils import chat_text_call
-from flask import render_template, request, jsonify, redirect, url_for
+from flask import render_template, request, jsonify, redirect, url_for, Response
 from flask_login import login_required, current_user, logout_user
 from app import login_manager, db
 from app.utils.file.file_utils import *
@@ -7,8 +8,10 @@ from app.utils.message_utils import *
 from app.utils.manager_utils import *
 from flask import Blueprint
 
+import time
 
 main = Blueprint('main', __name__)
+
 
 
 def updateDb():
@@ -73,10 +76,10 @@ def home():
     if len(session['ELEMENTS_CHAT']) > 0 or len(session['FILE_CONTEXT']) > 0:
         return render_template('index.html', elements=session['ELEMENTS_CHAT'], file_context=session['FILE_CONTEXT'],
                                information=session['INFORMATION'], user=current_user.username,
-                               lang=session['LANGUAGE_OPTION_CHOOSE'])
+                               user_id=session["ID_USER"], lang=session['LANGUAGE_OPTION_CHOOSE'])
 
     return render_template('index.html', information=session['INFORMATION'], user=current_user.username,
-                           lang=session['LANGUAGE_OPTION_CHOOSE'])
+                           user_id=session["ID_USER"] , lang=session['LANGUAGE_OPTION_CHOOSE'])
 
 
 @main.route('/get_elements', methods=["GET", "POST"])
@@ -98,7 +101,7 @@ def get_elements():
             'information': session.get('INFORMATION', None)
         }
 
-        # Imposta 'elements' nel dizionario 'data' se esiste una corrispondenza
+
         if elements in elements_map:
             data['elements'] = session.get(elements_map[elements], None)
 
@@ -114,11 +117,12 @@ def text_form_response():
 
     if current_user and current_user.has_chat_request_in_progress:
         return jsonify(
-            {"message": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
+            {"error": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
 
     current_user.has_chat_request_in_progress = True
     db.session.commit()
 
+      
     try:
         text = request.form.get('text')
         escaped_text = escape(text)
@@ -131,7 +135,7 @@ def text_form_response():
         }
 
         if translate == "true":
-            response = translate_manager(text, session['LANGUAGE_OPTION_CHOOSE'], session['MODEL_TRANS_MODEL'])
+            response = translate_manager(text, session['LANGUAGE_OPTION_CHOOSE'],'text')
 
             session['ELEMENTS_TRANSLATE'].append({'response_text': decode(response)})
             session.modified = True
@@ -148,7 +152,11 @@ def text_form_response():
             data['section'] = 'chat_sidebar'
 
         updateDb()
+            
         return jsonify(data)
+    except Exception as e:
+        print(f"Errore generico nella text form response: {str(e)}")
+        return jsonify({"error": "Errore generico nella text response" + str(e)}), 500   
     finally:
         current_user.has_chat_request_in_progress = False
         db.session.commit()
@@ -160,7 +168,7 @@ def upload_file():
 
     if current_user and current_user.has_chat_request_in_progress:
         return jsonify(
-            {"message": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
+            {"error": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
 
     current_user.has_chat_request_in_progress = True
     db.session.commit()
@@ -177,7 +185,7 @@ def upload_file():
             'file': session['FILE_CONTEXT'],
             'information': session["INFORMATION"]
         }
-
+        
         return jsonify(data)
     except Exception as e:
         print(f"Errore durante l'estrazione del contenuto del file: {str(e)}")
@@ -237,7 +245,6 @@ def clear_elements():
 @login_required
 def clear_context():
     try:
-
         file_path = "log/" + str(session["ID_USER"]) + "/log.json"
         log_context_to_file(file_path, session['CONTEXT'])
         session['ELEMENTS_CHAT'].clear()
@@ -344,14 +351,13 @@ def translate_file_response():
 
     if current_user and current_user.has_chat_request_in_progress:
         return jsonify(
-            {"message": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
+            {"error": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
 
     current_user.has_chat_request_in_progress = True
     db.session.commit()
-
+    send_sse_message("Elaborazione File" , 30, "trans")    
     try:
-        file = request.files['file']
-        print(request.form.get('opt'))
+        file = request.files['file']  
         file_manager(file, "translate", request.form.get('opt'))
 
         data = {
@@ -364,6 +370,7 @@ def translate_file_response():
         db.session.commit()
 
         updateDb()
+        
         return jsonify(data)
     except Exception as e:
         print(f"Errore : {str(e)}")
@@ -381,12 +388,13 @@ def transcribe_audio_response():
 
     if current_user and current_user.has_audio_request_in_progress:
         return jsonify(
-            {"message": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
+            {"error": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
 
     current_user.has_audio_request_in_progress = True
     db.session.commit()
-
+    
     try:
+        
         file = request.files['file']
 
         file_manager(file, 'audio', request.form.get('transcriptionOption'),
@@ -402,6 +410,7 @@ def transcribe_audio_response():
         current_user.user_elements_audio = session['ELEMENTS_AUDIO']
 
         db.session.commit()
+        
         return jsonify(data)
     except Exception as e:
         print(f"Errore : {str(e)}")
