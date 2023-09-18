@@ -10,9 +10,10 @@ from wrapt_timeout_decorator import timeout
 openai.api_key = os.getenv('API_KEY')
 
 
+
 @backoff.on_exception(backoff.constant,
-                      Exception,  # L'eccezione da ritentare
-                      interval=4,  # Intervallo di tempo tra le ritentative (in secondi)
+                      Exception,
+                      interval=4,  
                       max_tries=2)
 def chat_text_call(text):
     try:
@@ -33,12 +34,13 @@ def chat_text_call(text):
         session.modified = True
         return completion.choices[0].message["content"]
     except Exception as e:
+        print(f"Errore : {str(e)}")
         return f"Errore nella richiesta\n{str(e)}"
 
 
 @backoff.on_exception(backoff.constant,
-                      Exception,  # L'eccezione da ritentare
-                      interval=4,  # Intervallo di tempo tra le ritentative (in secondi)
+                      Exception,
+                      interval=4,  
                       max_tries=2)
 def translate_text_with_gpt(lang, text):
     try:
@@ -64,12 +66,13 @@ def translate_text_with_gpt(lang, text):
             ])
         return completion.choices[0].message["content"]
     except Exception as e:
+        print(f"Errore : {str(e)}")
         return f"Errore nella richiesta\n{str(e)}"
 
 
 @backoff.on_exception(backoff.constant,
-                      Exception,  # L'eccezione da ritentare
-                      interval=4,  # Intervallo di tempo tra le ritentative (in secondi)
+                      Exception,
+                      interval=4,  
                       max_tries=2)
 def transcribe_with_whisper(file_path):
     try:
@@ -82,8 +85,8 @@ def transcribe_with_whisper(file_path):
 
 
 @backoff.on_exception(backoff.constant,
-                      Exception,  # L'eccezione da ritentare
-                      interval=4,  # Intervallo di tempo tra le ritentative (in secondi)
+                      Exception,
+                      interval=4,  
                       max_tries=2)
 def audio_text_call(scope, text):
     try:
@@ -121,8 +124,8 @@ def audio_text_call(scope, text):
 
 
 @backoff.on_exception(backoff.constant,
-                      Exception,  # L'eccezione da ritentare
-                      interval=4,  # Intervallo di tempo tra le ritentative (in secondi)
+                      Exception,
+                      interval=4,  
                       max_tries=3)
 @timeout(30)
 def translate_document_text_call(lang, part):
@@ -150,4 +153,5 @@ def translate_document_text_call(lang, part):
 
         return completion.choices[0].message["content"]
     except Exception as e:
+        print(f"Errore : {str(e)}")
         return f"Errore nella richiesta\n{str(e)}"

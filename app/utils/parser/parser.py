@@ -11,6 +11,8 @@ import re
 
 
 def extract_file_content(file_path, file_name):
+    # Data la path e il nome di un file ritorna il testo contenuto.
+
     if allowed_file(file_name, {"xls", 'xlsx'}):
         df = pd.read_excel(file_path)
         file_text = df.to_string()
@@ -25,14 +27,18 @@ def extract_file_content(file_path, file_name):
     elif allowed_file(file_name, {"pdf"}):
         file_text = extract_text_from_pdf(file_path)
     else:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            file_text = f.read()
-            if isinstance(file_text, bytes):
-                file_text = file_text.decode('utf-8')
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                file_text = f.read()
+        except UnicodeDecodeError:
+            with open(file_path, 'r', encoding='latin-1') as f:
+                file_text = f.read()
     return file_text
 
 
 def extract_text_from_pdf(pdf_path):
+    # Data la path di un pdf ritorna il contenuto del pdf
+
     with open(pdf_path, 'rb') as file:
         reader = PdfReader(file)
         text = ""
@@ -44,38 +50,45 @@ def extract_text_from_pdf(pdf_path):
 
 
 def extract_text_from_docx(docx_file):
-    parts = []
-    doc = Document(docx_file)
+    # Dato il contenuto di un Documento ritorna una lista contenente run e paragrafi
+    # Include tabelle, Footer , Header e Testo
+    try:
+        parts = []
+        doc = Document(docx_file)
 
-    for paragraph in doc.paragraphs:
-        for run in paragraph.runs:
-            if run.text and re.sub(r'[ \t]', '', run.text) != "" and not (contains_only_punctuation(run.text.replace(" ", ""))):
-                parts.append(run.text)
+        for paragraph in doc.paragraphs:
+            for run in paragraph.runs:
+                if run.text and re.sub(r'[ \t]', '', run.text) != "" and not (contains_only_punctuation(run.text.replace(" ", ""))):
+                    parts.append(run.text)
 
-    for section in doc.sections:
-        header = section.header
-        for paragraph in header.paragraphs:
-            if paragraph.text and re.sub(r'[ \t]', '', paragraph.text) != "" and not (
+        for section in doc.sections:
+            header = section.header
+            for paragraph in header.paragraphs:
+                if paragraph.text and re.sub(r'[ \t]', '', paragraph.text) != "" and not (
+                            contains_only_punctuation(paragraph.text.replace(" ", ""))):
+                    parts.append(paragraph.text )
+
+            footer = section.footer
+            for paragraph in footer.paragraphs:
+                if paragraph.text and re.sub(r'[ \t]', '', paragraph.text) != "" and not (
                         contains_only_punctuation(paragraph.text.replace(" ", ""))):
-                parts.append(paragraph.text )
+                    parts.append(paragraph.text)
 
-        footer = section.footer
-        for paragraph in footer.paragraphs:
-            if paragraph.text and re.sub(r'[ \t]', '', paragraph.text) != "" and not (
-                    contains_only_punctuation(paragraph.text.replace(" ", ""))):
-                parts.append(paragraph.text)
-
-    for table in doc.tables:
-        for row in table.rows:
-            for cell in row.cells:
-                for paragraph in cell.paragraphs:
-                    if paragraph.text and re.sub(r'[ \t]', '', paragraph.text) != "" and not (
-                                contains_only_punctuation(paragraph.text.replace(" ", ""))):
-                            parts.append(paragraph.text)
-    return parts
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    for paragraph in cell.paragraphs:
+                        if paragraph.text and re.sub(r'[ \t]', '', paragraph.text) != "" and not (
+                                    contains_only_punctuation(paragraph.text.replace(" ", ""))):
+                                parts.append(paragraph.text)
+        return parts
+    except Exception as e:
+        raise e
 
 
 def write_text_to_docx(docx_file, translations, type):
+    # Dato il file e una lista con le traduzioni, modifica ogni run e paragrafo del file con la corrispettiva traduzione.
+
     doc = Document(docx_file)
     translated_index = 0
 

@@ -1,6 +1,8 @@
 import re
 from googletrans import Translator
 
+# Questo file include i metodi per contattare la Google Ai
+# Non viene Utilizzata per il basso rate limit
 # Da rimuovere
 
 

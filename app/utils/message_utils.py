@@ -5,6 +5,9 @@ import re
 
 
 def decode(input_string):
+    # Data una stringa sostituisce a ''' con i tag html di pre e code
+    # Serve per evidenziare le parti di codice che vengono ritornate
+    
     segments = re.split(r'```(.*?)```', input_string, flags=re.DOTALL)
 
     processed_segments = []
@@ -16,6 +19,8 @@ def decode(input_string):
 
 
 def num_tokens_from_messages(string, model="gpt-3.5-turbo-0613"):
+    # Dato un testo ritorna il numero di token
+    
     try:
         encoding = tiktoken.encoding_for_model(model)
     except KeyError:
@@ -26,6 +31,8 @@ def num_tokens_from_messages(string, model="gpt-3.5-turbo-0613"):
 
 
 def split_text_into_sections(text, max_tokens, model="gpt-3.5-turbo-0613"):
+    # Dato un testo restituisce una lista con il testo diviso in parti che non superano il max_tokens
+    
     sections = []
     current_section = ""
     current_section_tokens = 0
@@ -47,8 +54,17 @@ def split_text_into_sections(text, max_tokens, model="gpt-3.5-turbo-0613"):
 
     if current_section:
         sections.append(current_section)
-    for sec in sections:
-        print(f"{num_tokens_from_messages(sec)}")
 
     return sections
 
+
+def send_sse_message(message, progress, opt):
+    # Dato un messaggio, progresso e opt effettua una richiesta SSE al client
+
+    from flask import current_app as app
+    from flask import session
+    data = {'index': message, 'progress' : progress, "opt": opt}
+    
+    with app.app_context():
+        from flask_sse import sse
+        sse.publish(data, channel=session["ID_USER"])
