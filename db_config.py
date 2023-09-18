@@ -4,6 +4,8 @@ from app.user_model import User
 
 app = create_app()
 
+# Questo file serve per la Creazione, Eliminazione e Gestione degli Utenti del db.
+
 
 def print_users():
     with app.app_context():
@@ -39,7 +41,7 @@ def remove_users(username, ):
 if __name__ == "__main__":
     while True:
         print("\n---------------------\n1) Lista Utenti\n2) Aggiungi Utente \n3) Elimina Utente \n4) Elimina Tutti i "
-              "dati\n")
+              "dati\n5) Esci\n")
         x = int(input("Scelta di cosa fare: "))
         if x == 1:
             print_users()
@@ -55,3 +57,5 @@ if __name__ == "__main__":
             with app.app_context():
                 User.query.delete()
                 db.session.commit()
+        elif x == 5:
+            break

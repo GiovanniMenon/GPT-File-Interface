@@ -4,7 +4,6 @@ body{
     overflow: hidden;
 }
 
-
 ::-webkit-scrollbar {
     width: 0.5em;
 }
@@ -136,6 +135,7 @@ pre code {
     max-height: 15vw;
     border: 0px;
     z-index: 1;
+    transition: opacity 0.4s ease;
 
 }
 
@@ -193,6 +193,7 @@ pre code {
     transition: transform  0.3s ease;
 }
 
+
 #lang_menu_body{
     left: 9rem;
     transform: translateY(400%);
@@ -237,6 +238,10 @@ pre code {
     .custom-fs.fs-6{
         font-size: 0.775rem !important; /* Modifica la grandezza del font per adattarsi a fs-5 */
       }
+    .custom-fs.fs-4{
+        font-size: 1.05rem !important; /* Modifica la grandezza del font per adattarsi a fs-5 */
+      }
+
 
     #cont_form_textarea_wrapper {
     left: 15%;

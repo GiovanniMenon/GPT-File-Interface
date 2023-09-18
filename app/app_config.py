@@ -1,7 +1,7 @@
 
 import os
 
-
+# Classe utilizzata per caricare le configurazioni dell'app
 class Config:
 
     SECRET_KEY = os.urandom(16).hex()
@@ -14,3 +14,7 @@ class Config:
     SESSION_TYPE = 'filesystem'
     SESSION_PERMANENT = False
     SESSION_USE_SIGNER = True
+
+    REDIS_URL = "redis://localhost:6379/0"
+
+
