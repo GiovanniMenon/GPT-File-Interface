@@ -104,7 +104,6 @@ def clear_file_folder(folder_path):
     # Data la path di una cartella la cancella
 
     if not os.path.exists(folder_path):
-        print(f"La cartella {folder_path} non esiste.")
         return
 
     for filename in os.listdir(folder_path):
@@ -119,7 +118,7 @@ def clear_file_folder(folder_path):
 def split_audio(path, chunk_length=16*60*1000):
     # Dato un audio lo divide in parti di 15min e ritorna un lista di path a queste parti
 
-    send_sse_message("Divido il file in sotto parti", 60 , 'audio')
+    send_sse_message("bar","Divido il file in sotto parti", 45 , 'audio')
     audio = AudioSegment.from_file(path)
     length_audio = len(audio)
     chunks = [audio[i:i+chunk_length] for i in range(0, length_audio, chunk_length)]
@@ -130,14 +129,14 @@ def split_audio(path, chunk_length=16*60*1000):
         chunk.export(output_file_name, format="mp3")
         compressed_files.append(output_file_name)
         
-    send_sse_message("Trascrivo il file", 80 , 'audio')
+    send_sse_message("bar","Trascrivo il file", 50 , 'audio')
     return compressed_files
 
 
 def compress_audio(input_path, format="mp3"):
     # Dato un file audio lo comprime e ritorna il nuovo path al file
 
-    send_sse_message("Comprimo il file", 50 , 'audio')
+    send_sse_message("bar","Comprimo il file", 35 , 'audio')
     audio = AudioSegment.from_file(input_path)
     output_file = create_path(".mp3", "audio_folder")
     audio.export(output_file, format=format, bitrate="64k")

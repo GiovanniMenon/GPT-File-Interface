@@ -13,6 +13,8 @@
     lang_option = false // Indica se il menu delle lingue e' visualizzato o meno
     audio_badge = false // Visualizzazzione del badge di notifica
     form_text_val = "" // Contiene il contenuto della richiesta
+    response_val = ""
+
 
 function escapeHtml(unsafe) {
     // Dato del testo fa l'escape di questo
@@ -42,7 +44,6 @@ function check_sidebar(){
 function show_elements(element) {
     //Gestisce il comportamento delle sidebar
     let lastClickedSection = false;
-
     const config = {
         "chat_sidebar_li": {
             "divId": "chat_sidebar",
@@ -144,11 +145,11 @@ function show_elements(element) {
 
 
                 if (waiting_audio && side_bar_id === 'audio_sidebar'){
-                    showLoadingAnimation()
+                    showLoadingAnimation("audio")
                 }else if(waiting_chat_traslate && side_bar_id === 'translate_sidebar' ){
-                    showLoadingAnimation()
+                    showLoadingAnimation("chat")
                 }else if(waiting_chat && side_bar_id === 'chat_sidebar' ){
-                    showLoadingAnimation()
+                    showLoadingAnimation("chat")
                 }
 
             },
@@ -176,7 +177,7 @@ function sendForm() {
 
         /* Reset dei valori del form*/
         form_text_val = $("#cont_form_text").val()
-        showLoadingAnimation()
+        showLoadingAnimation("chat")
 
         $("#cont_form_text").val("")
 
@@ -197,6 +198,7 @@ function sendForm() {
             contentType: false,
             success:function(response) {
                     update_elements(response)
+                    response_val = ""
                     if (waiting_chat) waiting_chat = false
                     if (waiting_chat_traslate){
                         $('#progress_bar_trans_State').text("Nessun Caricamento");
@@ -209,6 +211,7 @@ function sendForm() {
                     if (error.responseJSON && error.responseJSON.request_in_progress === true) {
                         waiting_alert();
                     }
+                    response_val = ""
                     if(waiting_chat) waiting_chat = false
                     if(waiting_chat_traslate) waiting_chat_traslate = false
                     console.error(error.responseJSON.error);
@@ -385,6 +388,7 @@ function resetContest(){
 
     
 function update_elements(response){
+
         // Gestisce la risposta del server alle chiamate e aggiorna la vista in base a questa.
         if (side_bar_id !== response.section ) {
             return
@@ -470,58 +474,59 @@ function LogOut(){
 $(document).ready(function() {
         var elemento = document.getElementById('cont_form_text');
         if (elemento) {
-            
-            elemento.addEventListener('input', function () {
-                // Comportamento quando si scrive nel form 
-            
-                this.style.height = 'auto';
-                this.style.height = (this.scrollHeight) + 'px';
 
-                $.ajax({
+            //funzione per ritardare la chiamata ajax
+            function debounce(func, wait) {
+                var timeout;
+                return function() {
+                    var context = this, args = arguments;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(function() {
+                        func.apply(context, args);
+                    }, wait);
+                };
+            }
+
+            // La vera chiamata ajax
+            var delayedAjaxCall = debounce(function() {
+            $.ajax({
                     type: "POST",
-                    url: "/get_token",  
+                    url: "/get_token",
                     data: {text : this.value},
                     success: function(response) {
-                         $("#chat_information_Token_Messaggio").text(response.token)
+                        $("#chat_information_Token_Messaggio").text(response.token);
                     },
                     error: function(error) {
                         console.error(error.responseJSON.error);
                     }
-                
                 });
+            }, 300);
 
+            elemento.addEventListener('input', function () {
+                // Comportamento quando si scrive nel form
+
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+
+                // Chiama la funzione AJAX ritardata
+                delayedAjaxCall.call(this);
             });
 
             elemento.addEventListener("keydown", function(event) {
-                // Rimuoviamo il comportamento di default quando si preme enter con quello di invio del form
-                if (event.keyCode == 13 && !event.shiftKey) {     
+                // Rimuove il comportamento di default quando si preme enter con quello di invio del form
+                if (event.keyCode == 13 && !event.shiftKey) {
                   event.preventDefault(); 
                   sendForm();
                 }
             });
         }
 
-     
+
         $("#cont_form").on("submit", function(event) {
-            // Modifichiamo il comportamento alla pressione del submit
+                // Modifica il comportamento alla pressione del submit
                 event.preventDefault();
         }); 
-        
-        // Comportamento dello switch del tema dark/light
-        const themeDropdown = document.getElementById('themeDropdown');
-        const htmlElement = document.documentElement
-        themeDropdown.addEventListener('click', (event) => {
-            const selectedTheme = event.target.getAttribute('data-theme');
-        
-            if (selectedTheme === 'dark') {
-                htmlElement.setAttribute('data-bs-theme', 'dark');
-                themeIcon.className = 'fa-solid fa-moon';
-            } else if (selectedTheme === 'light') {
-                themeIcon.className = 'fa-solid fa-sun';
-                htmlElement.setAttribute('data-bs-theme', 'light');
-            }
-        });
-        
+
         // Comportamento dei nav link delle sidebar
         $(".nav-link").click(function() {
             $(".nav-link").removeClass("active");
@@ -621,7 +626,7 @@ function translate_file() {
     formData.append("opt", $('#current_file_opt').text().trim().toLowerCase());
 
 
-    showLoadingAnimation()
+    showLoadingAnimation("chat")
 
 
     waiting_chat_traslate = true
@@ -715,7 +720,7 @@ function transcribe_audio(){
         formData.append("translationLanguage", selectedLanguage);
     }
 
-    showLoadingAnimation()
+    showLoadingAnimation("audio")
 
     waiting_audio = true
     $.ajax({
@@ -772,9 +777,9 @@ function waiting_alert(){
     }, 5000);
 }
 
-function showLoadingAnimation(){
+function showLoadingAnimation(opt){
         // Animazione di attesa risposta
-        
+
         let chat = document.getElementById("cont_chat");
         let loading_element = chat.querySelector("#cont_ai_chat_tmp");
 
@@ -792,7 +797,8 @@ function showLoadingAnimation(){
             $("#cont_chat").append(userText);
         }
 
-        let aiText = $("<div>").attr("class", "row bg-body rounded-3 p-3 shadow mt-2").attr("id", "cont_ai_chat_tmp").html("<pre id='span_tmp'> " + " </pre>");
+        let aiText = $("<div>").attr("class", "row bg-body rounded-3 p-3 shadow mt-2").attr("id", "cont_ai_chat_tmp").html("<pre id='span_tmp_" + opt + "'>"+ response_val + "</pre>");
+
 
         $("#cont_chat").append(aiText);
         $("#cont_chat").append(element);
@@ -807,24 +813,83 @@ window.onbeforeunload = function(event) {
 
 $(document).ready(function() {
     // Connessione SSE
+    if (location.pathname === "/") {
         user_id = document.getElementById("username").getAttribute('data-value');
-       
-        const eventSource = new EventSource(`/stream?channel=${user_id}`);
 
-        eventSource.onmessage = function (event) {
+        const eventSource_Bar = new EventSource(`/stream?channel=${user_id}/bar`);
+
+        eventSource_Bar.onmessage = function (event) {
 
             const data = JSON.parse(event.data);
-           
+            console.log("Ricevuto evento:", data);
             const index = data.index;
             const progress = data.progress;
             const opt = data.opt;
-            
+
             const currentWidth = $('#progress_bar_' + opt).css("width");
-            $('#progress_bar_' + opt).css("width" , progress + '%')
+            $('#progress_bar_' + opt).css("width", progress + '%')
             $('#progress_bar_' + opt + '_State').text(index);
-            
+
         };
-        eventSource.onerror = function (event) {
+        eventSource_Bar.onerror = function (event) {
             console.error("Errore nella connessione SSE:", event);
+
         };
+
+        const eventSource_Chat = new EventSource(`/stream?channel=${user_id}/chat`);
+
+        eventSource_Chat.onmessage = function (event) {
+
+            const data = JSON.parse(event.data);
+            const index = data.index;
+            response_val = response_val + index
+
+            $('#span_tmp_chat').text(response_val)
+        };
+
+        eventSource_Chat.onerror = function (event) {
+
+            console.error("Errore nella connessione SSE:", event);
+
+        };
+
+    }
     })
+
+    // Tema
+    document.addEventListener('DOMContentLoaded', function() {
+            const setThemeBasedOnUserPreference = () => {
+                if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.setAttribute('data-bs-theme', 'dark');
+                } else {
+                    document.documentElement.setAttribute('data-bs-theme', 'light');
+                }
+                document.documentElement.style.display = "";
+            };
+
+
+            // Imposta il tema iniziale al caricamento della pagina
+            setThemeBasedOnUserPreference();
+
+            // Aggiungi un listener per rilevare i cambiamenti nelle preferenze dell'utente
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+                setThemeBasedOnUserPreference();
+            });
+        });
+
+$(document).ready(function() {
+    // Comportamento dello switch del tema dark/light
+    const themeDropdown = document.getElementById('themeDropdown');
+    const htmlElement = document.documentElement
+    themeDropdown.addEventListener('click', (event) => {
+        const selectedTheme = event.target.getAttribute('data-theme');
+
+        if (selectedTheme === 'dark') {
+            htmlElement.setAttribute('data-bs-theme', 'dark');
+            themeIcon.className = 'fa-solid fa-moon';
+        } else if (selectedTheme === 'light') {
+            themeIcon.className = 'fa-solid fa-sun';
+            htmlElement.setAttribute('data-bs-theme', 'light');
+        }
+    });
+})

@@ -31,7 +31,7 @@ def docx_file_translate_gpt(segments, lang):
                 translations.append(future.result(timeout=150))
                 count += 1
                 progress += 55/len(segments)
-                send_sse_message(f"Traduzione: {count}/{len(segments)}" , progress , "trans") 
+                send_sse_message("bar",f"Traduzione: {count}/{len(segments)}" , progress , "trans")
             except Exception as e:
                 executor.shutdown(wait=False, cancel_futures=True)
                 print(f"Errore durante la traduzione: {str(e)}")
