@@ -1,5 +1,6 @@
+
 from app.utils.openai_utils import chat_text_call
-from flask import render_template, request, jsonify, redirect, url_for
+from flask import render_template, request, jsonify, redirect, url_for, Response
 from flask_login import login_required, current_user, logout_user
 from app import login_manager, db
 from app.utils.file.file_utils import *
@@ -7,8 +8,10 @@ from app.utils.message_utils import *
 from app.utils.manager_utils import *
 from flask import Blueprint
 
+import time
 
 main = Blueprint('main', __name__)
+
 
 
 def updateDb():
@@ -22,12 +25,17 @@ def updateDb():
 
 
 def updateSession():
-    session['ELEMENTS_CHAT'] = current_user.user_elements_chat
-    session['ELEMENTS_TRANSLATE'] = current_user.user_elements_translate
-    session['ELEMENTS_AUDIO'] = current_user.user_elements_audio
+    if current_user.user_elements_chat is not None:
+        session['ELEMENTS_CHAT'] = current_user.user_elements_chat
+    if current_user.user_elements_translate is not None:
+        session['ELEMENTS_TRANSLATE'] = current_user.user_elements_translate
+    if current_user.user_elements_audio is not None:
+        session['ELEMENTS_AUDIO'] = current_user.user_elements_audio
+    if current_user.user_file_in_context is not None:
+        session['FILE_CONTEXT'] = current_user.user_file_in_context
+    if current_user.user_context is not None:
+        session['CONTEXT'] = current_user.user_context
 
-    session['FILE_CONTEXT'] = current_user.user_file_in_context
-    session['CONTEXT'] = current_user.user_context
 
 
 @main.route('/', methods=["GET", "POST"])
@@ -39,44 +47,41 @@ def home():
     session.setdefault('LANGUAGE_OPTION_CHOOSE', 'English')
     session.setdefault('MODEL_TRANS_MODEL', 'CHAT-AI')
 
+    session['ELEMENTS_TRANSLATE'] = []
+    session['ELEMENTS_AUDIO'] = []
+    session['ELEMENTS_CHAT'] = []
+    session['FILE_CONTEXT'] = []
+    session['CONTEXT'] = [{'role': "system", 'content': "Sei un assistente, hai il compito di rispondere alle mie "
+                                                        "domande,"
+                                                        "eseguire i miei ordini e di aprire i link che ti mando."}]
+    session.modified = True
+
     if 'INFORMATION' not in session:
         session['INFORMATION'] = {"Num_Message": 0, "Num_Token": 0}
         session.modified = True
 
     if current_user.user_elements_audio:
         session['ELEMENTS_AUDIO'] = current_user.user_elements_audio
-    else:
-        session['ELEMENTS_AUDIO'] = []
-    session.modified = True
+        session.modified = True
     if current_user.user_elements_translate:
         session['ELEMENTS_TRANSLATE'] = current_user.user_elements_translate
-    else:
-        session['ELEMENTS_TRANSLATE'] = []
-    session.modified = True
+        session.modified = True
     if current_user.user_elements_chat:
         session['ELEMENTS_CHAT'] = current_user.user_elements_chat
-    else:
-        session['ELEMENTS_CHAT'] = []
-    session.modified = True
+        session.modified = True
     if current_user.user_file_in_context:
         session['FILE_CONTEXT'] = current_user.user_file_in_context
-    else:
-        session['FILE_CONTEXT'] = []
-    session.modified = True
     if current_user.user_context:
         session['CONTEXT'] = current_user.user_context
-    else:
-        session['CONTEXT'] = [{'role': "system", 'content': "Sei un assistente, hai il compito di rispondere alle mie "
-                                                            "domande,"
-                                                            "eseguire i miei ordini e di aprire i link che ti mando."}]
-    session.modified = True
+        session.modified = True
+
     if len(session['ELEMENTS_CHAT']) > 0 or len(session['FILE_CONTEXT']) > 0:
         return render_template('index.html', elements=session['ELEMENTS_CHAT'], file_context=session['FILE_CONTEXT'],
                                information=session['INFORMATION'], user=current_user.username,
-                               lang=session['LANGUAGE_OPTION_CHOOSE'])
+                               user_id=session["ID_USER"], lang=session['LANGUAGE_OPTION_CHOOSE'])
 
     return render_template('index.html', information=session['INFORMATION'], user=current_user.username,
-                           lang=session['LANGUAGE_OPTION_CHOOSE'])
+                           user_id=session["ID_USER"] , lang=session['LANGUAGE_OPTION_CHOOSE'])
 
 
 @main.route('/get_elements', methods=["GET", "POST"])
@@ -98,10 +103,9 @@ def get_elements():
             'information': session.get('INFORMATION', None)
         }
 
-        # Imposta 'elements' nel dizionario 'data' se esiste una corrispondenza
+
         if elements in elements_map:
             data['elements'] = session.get(elements_map[elements], None)
-
         return jsonify(data)
     except Exception as e:
         print(f"Errore : {str(e)}")
@@ -111,15 +115,15 @@ def get_elements():
 @main.route('/process_form', methods=["GET", "POST"])
 @login_required
 def text_form_response():
-
     if current_user and current_user.has_chat_request_in_progress:
         return jsonify(
-            {"message": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
+            {"error": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
 
     current_user.has_chat_request_in_progress = True
     db.session.commit()
 
     try:
+
         text = request.form.get('text')
         escaped_text = escape(text)
 
@@ -131,7 +135,7 @@ def text_form_response():
         }
 
         if translate == "true":
-            response = translate_manager(text, session['LANGUAGE_OPTION_CHOOSE'], session['MODEL_TRANS_MODEL'])
+            response = translate_manager(text, session['LANGUAGE_OPTION_CHOOSE'],'text')
 
             session['ELEMENTS_TRANSLATE'].append({'response_text': decode(response)})
             session.modified = True
@@ -148,7 +152,11 @@ def text_form_response():
             data['section'] = 'chat_sidebar'
 
         updateDb()
+            
         return jsonify(data)
+    #except Exception as e:
+        #print(f"Errore generico nella text form response: {str(e)}")
+        #return jsonify({"error": "Errore generico nella text response" + str(e)}), 500
     finally:
         current_user.has_chat_request_in_progress = False
         db.session.commit()
@@ -160,7 +168,7 @@ def upload_file():
 
     if current_user and current_user.has_chat_request_in_progress:
         return jsonify(
-            {"message": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
+            {"error": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
 
     current_user.has_chat_request_in_progress = True
     db.session.commit()
@@ -177,7 +185,7 @@ def upload_file():
             'file': session['FILE_CONTEXT'],
             'information': session["INFORMATION"]
         }
-
+        
         return jsonify(data)
     except Exception as e:
         print(f"Errore durante l'estrazione del contenuto del file: {str(e)}")
@@ -237,7 +245,6 @@ def clear_elements():
 @login_required
 def clear_context():
     try:
-
         file_path = "log/" + str(session["ID_USER"]) + "/log.json"
         log_context_to_file(file_path, session['CONTEXT'])
         session['ELEMENTS_CHAT'].clear()
@@ -344,14 +351,13 @@ def translate_file_response():
 
     if current_user and current_user.has_chat_request_in_progress:
         return jsonify(
-            {"message": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
+            {"error": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
 
     current_user.has_chat_request_in_progress = True
     db.session.commit()
-
+    send_sse_message("Elaborazione File" , 30, "trans")    
     try:
-        file = request.files['file']
-        print(request.form.get('opt'))
+        file = request.files['file']  
         file_manager(file, "translate", request.form.get('opt'))
 
         data = {
@@ -364,6 +370,7 @@ def translate_file_response():
         db.session.commit()
 
         updateDb()
+        
         return jsonify(data)
     except Exception as e:
         print(f"Errore : {str(e)}")
@@ -381,12 +388,13 @@ def transcribe_audio_response():
 
     if current_user and current_user.has_audio_request_in_progress:
         return jsonify(
-            {"message": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
+            {"error": "Un'altra richiesta è in corso per questo utente.", "request_in_progress": True}), 400
 
     current_user.has_audio_request_in_progress = True
     db.session.commit()
-
+    
     try:
+        
         file = request.files['file']
 
         file_manager(file, 'audio', request.form.get('transcriptionOption'),
@@ -402,6 +410,7 @@ def transcribe_audio_response():
         current_user.user_elements_audio = session['ELEMENTS_AUDIO']
 
         db.session.commit()
+        
         return jsonify(data)
     except Exception as e:
         print(f"Errore : {str(e)}")
