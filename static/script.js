@@ -1,4 +1,4 @@
-    
+
     //General Page
     const allowedExtensionsFile = ["pdf", "json", "txt", "docx", "cpp", "xlsx", "csv", "html", "py", "java", "xls"] 
     const allowedExtensionsAudio = ["mp3", "mp4", "mpeg", "mpga", "m4a", "wav", "webm"]
@@ -15,6 +15,8 @@
     form_text_val = "" // Contiene il contenuto della richiesta
 
 function escapeHtml(unsafe) {
+    // Dato del testo fa l'escape di questo
+
     return unsafe
          .replace(/&/g, "&amp;")
          .replace(/</g, "&lt;")
@@ -22,8 +24,10 @@ function escapeHtml(unsafe) {
          .replace(/"/g, "&quot;")
          .replace(/'/g, "&#039;");
 }
-    //Verifica e regola la grandezza della interfaccia
+    
 function check_sidebar(){
+    //Verifica e regola la grandezza della interfaccia
+
         let side_bar_element = $("#cont");
         if (side_bar) {
         side_bar_element.removeClass("offset-md-3 col-md-8");
@@ -34,8 +38,9 @@ function check_sidebar(){
     }
     }
 
-    //Show delle sidebar
+    
 function show_elements(element) {
+    //Gestisce il comportamento delle sidebar
     let lastClickedSection = false;
 
     const config = {
@@ -74,17 +79,14 @@ function show_elements(element) {
     let other;
 
     if (element.id === "chat_sidebar_li") {
-        // Se è la chat sidebar, imposta gli altri stati a false
+    
         audio = false;
         translate = false;
     } else {
-        // Altrimenti, imposta lo stato specifico
         window[settings.state] = true;
     }
 
-
-
-     if (side_bar_id !== settings.divId){
+    if (side_bar_id !== settings.divId){
          lastClickedSection = true;
      }
 
@@ -94,8 +96,6 @@ function show_elements(element) {
 
     document.getElementById('cont_form').style.transform = settings.formTransform;
     document.getElementById('button_context').style.transform = settings.contextButtonTranform;
-
-
 
     if (!side_bar) {
         myDiv.style.left = "7rem";
@@ -123,10 +123,11 @@ function show_elements(element) {
         audio_badge = false
     }
 
-        // Aggiorno la grandezza della chat in base a se la sidebar e' attiva o meno
-        check_sidebar()
-        // Richiedo la chat specifica per quell'argomento.
+        
+    check_sidebar()
+        
     let formData;
+
     if (lastClickedSection) {
         formData = new FormData();
         formData.append("sidebar", side_bar_id);
@@ -152,7 +153,7 @@ function show_elements(element) {
 
             },
             error: function(error){
-                alert(error.responseJSON.error);
+                console.error(error.responseJSON.error);
             },
 
         });
@@ -160,13 +161,13 @@ function show_elements(element) {
 
     }
 
-    // Chiamata Chat
+    
 function sendForm() {
+    // Gestisce il comportamento del form quando si invia del testo
         if(waiting_chat || waiting_chat_traslate || $("#cont_form_text").val().replace(/\s/g, '') === ""){
             waiting_alert()
             return
         }
-
 
 
         var formData = new FormData($("#cont_form")[0]);
@@ -197,22 +198,29 @@ function sendForm() {
             success:function(response) {
                     update_elements(response)
                     if (waiting_chat) waiting_chat = false
-                    if (waiting_chat_traslate) waiting_chat_traslate = false
+                    if (waiting_chat_traslate){
+                        $('#progress_bar_trans_State').text("Nessun Caricamento");
+                        $('#progress_bar_trans').css("width" , 0 + '%')
+                        waiting_chat_traslate = false
+                        
+                    } 
                 },
             error: function(error) {
-                     if (error.responseJSON && error.responseJSON.request_in_progress === true) {
+                    if (error.responseJSON && error.responseJSON.request_in_progress === true) {
                         waiting_alert();
                     }
                     if(waiting_chat) waiting_chat = false
                     if(waiting_chat_traslate) waiting_chat_traslate = false
+                    console.error(error.responseJSON.error);
                 }
             });
         }
 
     
-    /*Text Area Behaviour*/
+    
 function switchCont(element) {
-        
+        /*Text Area Behaviour*/
+
         if(element.id === "cont_chat"){
             document.getElementById('cont_form_text').style.opacity = '0.5';
             document.getElementById('cont_form_text').style.height = 'auto';
@@ -224,8 +232,9 @@ function switchCont(element) {
                       
     }
 
-    /*Model Selection*/
+    
 function change_chat_model(element) {
+    /*Model Selection*/
         if(waiting_chat){
             waiting_alert()
             return
@@ -246,8 +255,9 @@ function change_chat_model(element) {
             });
         }
 
-    /*Clear Page*/
+    
 function clearPage()   {
+    /*Clear Page*/
         if(waiting_chat || waiting_chat_traslate){
             return
         }
@@ -259,13 +269,14 @@ function clearPage()   {
                 url: "/clear_elements",
                 data: {sidebar: side_bar_id},
                 error: function(error) {
-                    alert(error.responseJSON.error);
+                    console.error(error.responseJSON.error);
                 },
             });
         }
  
-    /*Upload File Behaviour*/
+    
 function upload_file_chat() {
+    /*Upload File Behaviour*/
         if(waiting_chat || waiting_chat_traslate){
             waiting_alert()
             return
@@ -322,13 +333,14 @@ function upload_file_chat() {
                         waiting_alert();
                     }
                     waiting_chat = false;
-                    alert(error.responseJSON.error);
+                    console.error(error.responseJSON.error);
                 }
             });
 
         } 
 
 function remFile(element){
+    /*Gestisce la rimozione di un file dal contesto*/
         if(waiting_chat){
             return
 
@@ -345,12 +357,13 @@ function remFile(element){
                         }
                     },
                     error: function(error) {
-                        alert(error.responseJSON.error);
+                        console.error(error.responseJSON.error);
                     }
                 });
         }
-    //Reset Contest
+    
 function resetContest(){
+    /*Gestisce il reset del contesto*/
         if(waiting_chat){
             return 
         }
@@ -363,16 +376,16 @@ function resetContest(){
                 type: "POST",
                 url: "/clear_context",
                 error: function(error) {
-                    alert(error.responseJSON.error);
+                    console.error(error.responseJSON.error);
                 }
             });
 
 
     }
 
-    //Elaborazione della risposta
+    
 function update_elements(response){
-
+        // Gestisce la risposta del server alle chiamate e aggiorna la vista in base a questa.
         if (side_bar_id !== response.section ) {
             return
         }
@@ -403,7 +416,6 @@ function update_elements(response){
         }
  
         /* Nel caso di Stampa Inversa */
-        // Elements
         response.elements.reverse();
         for (var i = 0; i < response.elements.length; i++) {
             var element = response.elements[i];
@@ -417,7 +429,6 @@ function update_elements(response){
                 $("#cont_chat").append(aiText);
             }
             
-            // Controlla se esiste il link_text nell'elemento
             if (element.link_text) {
                 var linkText = $("<div>").attr("class" ,"d-flex p-1 shadow rounded-3 mt-4").attr("id", "cont_link_chat").html(element.link_text);
                 aiText.append(linkText);
@@ -427,9 +438,9 @@ function update_elements(response){
     }
             
     
-    //Escaping dei Dati
+    
 $(document).on('click', '.cont_button_rem_File_label', function() {
-       
+        //Escaping dei Dati
         var filename = $(this).data('filename');
         var associatedButton = $("button[data-filename='" + filename + "']");
         associatedButton.click();
@@ -437,9 +448,10 @@ $(document).on('click', '.cont_button_rem_File_label', function() {
     });
 
 
-    //LogOut
+    
 
 function LogOut(){
+    //LogOut
             $.ajax({
                     type: "POST",
                     url: "/LogOut",
@@ -447,20 +459,21 @@ function LogOut(){
                         window.location.href = "/auth/login";
                     },
                     error: function(error) {
-                        alert(error.responseJSON.error);
+                        console.error(error.responseJSON.error);
                     }
 
 
                 });
         }
 
-    // Appena si carica la pagina
+    
 $(document).ready(function() {
-
         var elemento = document.getElementById('cont_form_text');
         if (elemento) {
             
             elemento.addEventListener('input', function () {
+                // Comportamento quando si scrive nel form 
+            
                 this.style.height = 'auto';
                 this.style.height = (this.scrollHeight) + 'px';
 
@@ -472,29 +485,29 @@ $(document).ready(function() {
                          $("#chat_information_Token_Messaggio").text(response.token)
                     },
                     error: function(error) {
-                        alert(error.responseJSON.error);
+                        console.error(error.responseJSON.error);
                     }
                 
                 });
 
             });
-        }
 
-        var elemento = document.getElementById("cont_form_text");
-          
-            if (elemento) {
-              elemento.addEventListener("keydown", function(event) {
+            elemento.addEventListener("keydown", function(event) {
+                // Rimuoviamo il comportamento di default quando si preme enter con quello di invio del form
                 if (event.keyCode == 13 && !event.shiftKey) {     
                   event.preventDefault(); 
                   sendForm();
                 }
-              });
-            }
+            });
+        }
+
      
         $("#cont_form").on("submit", function(event) {
+            // Modifichiamo il comportamento alla pressione del submit
                 event.preventDefault();
         }); 
-       
+        
+        // Comportamento dello switch del tema dark/light
         const themeDropdown = document.getElementById('themeDropdown');
         const htmlElement = document.documentElement
         themeDropdown.addEventListener('click', (event) => {
@@ -509,6 +522,7 @@ $(document).ready(function() {
             }
         });
         
+        // Comportamento dei nav link delle sidebar
         $(".nav-link").click(function() {
             $(".nav-link").removeClass("active");
             $(".nav-link").addClass("link-body-emphasis");
@@ -519,8 +533,11 @@ $(document).ready(function() {
         });
         });
 
- // Lenguage Selection
-    function change_trans_model(element) {
+// Translate Page
+
+function change_trans_model(element) {
+    // Da rimuovere
+    // Gestisce il cambiamento nel modello di traduzione
         if(waiting_chat_traslate){
             waiting_alert()
             return
@@ -536,9 +553,6 @@ $(document).ready(function() {
            // document.getElementById("Google-AI").classList.remove("btn-primary");
         }
 
-
-
-
             $.ajax({
                 type: "POST",
                 url: "/model_trans_api",
@@ -547,20 +561,17 @@ $(document).ready(function() {
         }
 
 function change_language(element,opt) {
-      let button;
-         if (opt === 'audio') {
-             button = document.getElementById("current_audiolang")
-             button.textContent = element.value + " "
-         } else {
-             // Seleziona tutti gli elementi con la classe "ibutton"
-                var ibuttons = document.querySelectorAll('.current_lang');
+    // Gestisce il cambiamento della lingua sia nella traduzione che nella trascrizione.
+        let button;
+        if (opt === 'audio') {
+            button = document.getElementById("current_audiolang")
+            button.textContent = element.value + " "
+        } else { 
+            var ibuttons = document.querySelectorAll('.current_lang');
 
-                // Itera attraverso gli elementi e cambia il testo
-                ibuttons.forEach(function(ibutton) {
-                  ibutton.textContent = element.value + " "
-                });
-
-
+            ibuttons.forEach(function(ibutton) {
+            ibutton.textContent = element.value + " "
+        });
 
          $.ajax({
              type: "POST",
@@ -573,14 +584,15 @@ function change_language(element,opt) {
 
 
 function change_translate_opt(element,opt) {
-      let button;
-      button = document.getElementById("current_file_opt")
-      button.textContent = opt + " "
-
+    // Gestisce il cambiamento del testo dell'opzione di traduzione
+    let button;
+    button = document.getElementById("current_file_opt")
+    button.textContent = opt + " "
 
 }
 
 function translate_file() {
+    // Gestisce la traduzione dei file 
 
     if(waiting_chat || waiting_chat_traslate){
         waiting_alert()
@@ -624,6 +636,8 @@ function translate_file() {
                 update_elements(response)
                 waiting_chat_traslate = false
                 document.getElementById('cont_form_text').placeholder="Inserisci il testo da tradurre";
+                $('#progress_bar_trans_State').text("Nessun Caricamento");
+                $('#progress_bar_trans').css("width" , 0 + '%')
             }, 
             error: function(error) {
                 if (error.responseJSON && error.responseJSON.request_in_progress === true) {
@@ -635,8 +649,9 @@ function translate_file() {
         });
 }
 
-    //Lang Search Selection
+    
 function filterLanguages(id) {
+    // Funzione per la ricerca della lingua
         const input = document.getElementById('languageSearch' + id).value.toLowerCase();
         const languageList = document.getElementById('languageList' + id);
         const languages = languageList.getElementsByTagName('li');
@@ -653,10 +668,12 @@ function filterLanguages(id) {
     }
 
 //Audio Page
-function change_audioOption(element){
-     button = document.getElementById("current_audioOption")
 
-     button.textContent  = element.value + " "
+function change_audioOption(element){
+    // Gestisce il cambio di opzione per la trascrizione
+    button = document.getElementById("current_audioOption")
+
+    button.textContent  = element.value + " "
 
     let lang_menu;
     lang_menu = document.getElementById("audio_lang_menu")
@@ -668,7 +685,10 @@ function change_audioOption(element){
         lang_option = false
     }
     }
+
+
 function transcribe_audio(){
+    // Gestisce l'invio del file per la trascrizione
     if(waiting_audio){
         return
     }
@@ -695,9 +715,7 @@ function transcribe_audio(){
         formData.append("translationLanguage", selectedLanguage);
     }
 
-
-
-   showLoadingAnimation()
+    showLoadingAnimation()
 
     waiting_audio = true
     $.ajax({
@@ -710,18 +728,18 @@ function transcribe_audio(){
                     const xhr = new window.XMLHttpRequest();
                     xhr.upload.addEventListener("progress", function(event) {
                         if (event.lengthComputable) {
-                            $('#progress_bar_State').text("Caricamento");
-                            const percentComplete = (event.loaded / event.total) * 100;
+
+                            const percentComplete = ((event.loaded / event.total) * 100)/5;
                             $('#progress_bar_audio').css("width" , percentComplete + '%')
-                            if (percentComplete >= 100) {
-                                $('#progress_bar_State').text("Elaborazione della Richiesta ~3min");
+                            if (percentComplete <= 100) {
+                                $('#progress_bar_audio_State').text("Upload Del file");
                             }
                         }
                     }, false);
                     return xhr;
                 },
             success:function(response) {
-                $('#progress_bar_State').text("Nessun Caricamento");
+                $('#progress_bar_audio_State').text("Nessun Caricamento");
                 $('#progress_bar_audio').css("width" , 0 + '%')
                 update_elements(response)
                 waiting_audio = false
@@ -738,25 +756,25 @@ function transcribe_audio(){
                 waiting_audio= false;
                 $('#progress_bar_State').text("Nessun Caricamento");
                 $('#progress_bar_audio').css("width" , 0 + '%')
-                alert(error.responseJSON.error);
+                console.error(error.responseJSON.error);
             }
         });
 
 }
 
 function waiting_alert(){
-    //document.getElementById('alert_waiting').style.transform = "none"
+    // Pop Up in caso di richeista gia in corso
     let alertElement = document.getElementById('alert_waiting');
     alertElement.classList.add('visible');
 
-    // Rimuovi la classe "visible" dopo 0.5 secondi per far tornare indietro l'elemento
     setTimeout(function() {
         alertElement.classList.remove('visible');
     }, 5000);
 }
 
 function showLoadingAnimation(){
-
+        // Animazione di attesa risposta
+        
         let chat = document.getElementById("cont_chat");
         let loading_element = chat.querySelector("#cont_ai_chat_tmp");
 
@@ -781,7 +799,32 @@ function showLoadingAnimation(){
 }
 
 window.onbeforeunload = function(event) {
+    // Avviso se si tenta di aggiornare la pagina con una richiesta in attesa
     if(waiting_chat || waiting_audio || waiting_chat_traslate ){
         event.returnValue = 'Stai lasciando la pagina prima che una delle tue richieste sia stata completata.';
     }
 };
+
+$(document).ready(function() {
+    // Connessione SSE
+        user_id = document.getElementById("username").getAttribute('data-value');
+       
+        const eventSource = new EventSource(`/stream?channel=${user_id}`);
+
+        eventSource.onmessage = function (event) {
+
+            const data = JSON.parse(event.data);
+           
+            const index = data.index;
+            const progress = data.progress;
+            const opt = data.opt;
+            
+            const currentWidth = $('#progress_bar_' + opt).css("width");
+            $('#progress_bar_' + opt).css("width" , progress + '%')
+            $('#progress_bar_' + opt + '_State').text(index);
+            
+        };
+        eventSource.onerror = function (event) {
+            console.error("Errore nella connessione SSE:", event);
+        };
+    })

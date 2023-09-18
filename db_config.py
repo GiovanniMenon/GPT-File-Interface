@@ -4,6 +4,8 @@ from app.user_model import User
 
 app = create_app()
 
+# Questo file serve per la Creazione, Eliminazione e Gestione degli Utenti del db.
+
 
 def print_users():
     with app.app_context():
