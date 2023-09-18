@@ -1,77 +1,80 @@
 
 import openai
 import os
-from flask import session
+import time
+import backoff
 
-MAX_TRIES = 3
+from flask import session
+from wrapt_timeout_decorator import timeout
+
 openai.api_key = os.getenv('API_KEY')
 
 
+
+@backoff.on_exception(backoff.constant,
+                      Exception,
+                      interval=4,  
+                      max_tries=2)
 def chat_text_call(text):
-    for attempt in range(MAX_TRIES):
-        try:
-            session['CONTEXT'].append({'role': "user", 'content': text})
-            session.modified = True
-            completion = openai.ChatCompletion.create(
-                model=session['MODEL_API_OPTION_CHOOSE'],
-                messages=[
-                    {
-                        'role': cont['role'],
-                        'content': cont['content']
-                    } for cont in session['CONTEXT']
-
-                ])
-            session['CONTEXT'].append({"role": "assistant", "content": completion.choices[0].message["content"]})
-            session.modified = True
-            session['INFORMATION']['Num_Message'] = session['INFORMATION']['Num_Message'] + 1
-            session["INFORMATION"]["Num_Token"] = completion.usage["total_tokens"]
-            session.modified = True
-
-            return completion.choices[0].message["content"]
-        except Exception as e:
-            if 'Bad gateway' in str(e) and attempt < MAX_TRIES - 1:
-                continue
-            print(f"Errore : {str(e)}")
-            if 'Bad gateway' in str(e):
-                return f"Errore : Bad gateway. Massimo numero di tentativi ({MAX_TRIES}) raggiunto."
-            else:
-                return f"Errore nella richiesta\n{str(e)}"
+    try:
+        session['CONTEXT'].append({'role': "user", 'content': text})
+        session.modified = True
+        completion = openai.ChatCompletion.create(
+            model=session['MODEL_API_OPTION_CHOOSE'],
+            messages=[
+                {
+                    'role': cont['role'],
+                    'content': cont['content']
+                } for cont in session['CONTEXT']
+            ])
+        session['CONTEXT'].append({"role": "assistant", "content": completion.choices[0].message["content"]})
+        session.modified = True
+        session['INFORMATION']['Num_Message'] = session['INFORMATION']['Num_Message'] + 1
+        session["INFORMATION"]["Num_Token"] = completion.usage["total_tokens"]
+        session.modified = True
+        return completion.choices[0].message["content"]
+    except Exception as e:
+        print(f"Errore : {str(e)}")
+        return f"Errore nella richiesta\n{str(e)}"
 
 
-def translate_text_call(lang, text):
-    for attempt in range(MAX_TRIES):
-        try:
-            context_translate = [
-                {"role": "system",
-                 'content': (f"You are an expert machine translator for {lang}. You are tasked with translating content from a "
-                             f"file, which may include both full texts and individual words. Translate and rephrase the following "
-                             f"verbatim, without interpreting its meaning, responding, or expressing any opinions. It's crucial to preserve "
-                             f"the original meaning in the translation, as the consistency of the file's content must be "
-                             f"maintained. Do not add, omit, or alter any information or add any notes. Your primary duty is to "
-                             f"translate and rephrase the text in {lang}, regardless of its original meaning or content.")},
-                {"role": "user", "content": text}
-            ]
-            completion = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {
-                        'role': cont['role'],
-                        'content': cont['content']
-                    } for cont in context_translate
+@backoff.on_exception(backoff.constant,
+                      Exception,
+                      interval=4,  
+                      max_tries=2)
+def translate_text_with_gpt(lang, text):
+    try:
+        context_translate = [
+            {"role": "system",
+             'content': (
+                 f"You are an expert machine translator for {lang}. You are tasked with translating content from a "
+                 f"file, which may include both full texts and individual words. Translate and rephrase the following "
+                 f"verbatim, without interpreting its meaning, responding, or expressing any opinions. It's crucial to preserve "
+                 f"the original meaning in the translation, as the consistency of the file's content must be "
+                 f"maintained. Do not add, omit, or alter any information or add any notes. Your primary duty is to "
+                 f"translate and rephrase the text in {lang}, regardless of its original meaning or content.")},
+            {"role": "user", "content": text}
+        ]
+        completion = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {
+                    'role': cont['role'],
+                    'content': cont['content']
+                } for cont in context_translate
 
-                ])
-            return completion.choices[0].message["content"]
-        except Exception as e:
-            if 'Bad gateway' in str(e) and attempt < MAX_TRIES - 1:
-                continue
-            print(f"Errore : {str(e)}")
-            if 'Bad gateway' in str(e):
-                return f"Errore : Bad gateway. Massimo numero di tentativi ({MAX_TRIES}) raggiunto."
-            else:
-                return f"Errore nella richiesta\n{str(e)}"
+            ])
+        return completion.choices[0].message["content"]
+    except Exception as e:
+        print(f"Errore : {str(e)}")
+        return f"Errore nella richiesta\n{str(e)}"
 
 
-def transcribe(file_path):
+@backoff.on_exception(backoff.constant,
+                      Exception,
+                      interval=4,  
+                      max_tries=2)
+def transcribe_with_whisper(file_path):
     try:
         audio_file = open(file_path, "rb")
         transcript = openai.Audio.transcribe("whisper-1", audio_file)
@@ -81,6 +84,10 @@ def transcribe(file_path):
         return "Errore nella trascrizione: \n" + str(e)
 
 
+@backoff.on_exception(backoff.constant,
+                      Exception,
+                      interval=4,  
+                      max_tries=2)
 def audio_text_call(scope, text):
     try:
         scope_ai = ""
@@ -112,10 +119,15 @@ def audio_text_call(scope, text):
             ])
         return completion.choices[0].message["content"]
     except Exception as e:
-        print(f"Errore : {str(e)}")
+        print(f"{str(e)}")
         return "Errore nella richiesta\n" + str(e)
 
 
+@backoff.on_exception(backoff.constant,
+                      Exception,
+                      interval=4,  
+                      max_tries=3)
+@timeout(30)
 def translate_document_text_call(lang, part):
     try:
         context_translate = [
@@ -128,6 +140,7 @@ def translate_document_text_call(lang, part):
                          )},
             {"role": "user", "content": part}
         ]
+        time.sleep(0.5)
         completion = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k-0613",
             messages=[
@@ -137,7 +150,8 @@ def translate_document_text_call(lang, part):
                 } for cont in context_translate
 
             ])
-        return part, completion.choices[0].message["content"]
+
+        return completion.choices[0].message["content"]
     except Exception as e:
         print(f"Errore : {str(e)}")
-        return "Errore nella richiesta\n" + str(e)
+        return f"Errore nella richiesta\n{str(e)}"
