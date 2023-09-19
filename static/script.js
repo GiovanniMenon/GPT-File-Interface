@@ -154,7 +154,7 @@ function show_elements(element) {
 
             },
             error: function(error){
-                console.error(error.responseJSON.error);
+                alert(error.responseJSON.error);
             },
 
         });
@@ -165,11 +165,14 @@ function show_elements(element) {
     
 function sendForm() {
     // Gestisce il comportamento del form quando si invia del testo
-        if(waiting_chat || waiting_chat_traslate || $("#cont_form_text").val().replace(/\s/g, '') === ""){
+        if(waiting_chat || waiting_chat_traslate ){
             waiting_alert()
             return
         }
 
+        if($("#cont_form_text").val().replace(/\s/g, '') === ""){
+            return
+        }
 
         var formData = new FormData($("#cont_form")[0]);
         formData.append("translate", translate);
@@ -214,11 +217,13 @@ function sendForm() {
             error: function(error) {
                     if (error.responseJSON && error.responseJSON.request_in_progress === true) {
                         waiting_alert();
+                    }else{
+                        alert(error.responseJSON.error);
                     }
                     response_val = ""
                     if(waiting_chat) waiting_chat = false
                     if(waiting_chat_traslate) waiting_chat_traslate = false
-                    console.error(error.responseJSON.error);
+
                 }
             });
         }
@@ -275,7 +280,7 @@ function clearPage()   {
                 url: "/clear_elements",
                 data: {sidebar: side_bar_id},
                 error: function(error) {
-                    console.error(error.responseJSON.error);
+                    alert(error.responseJSON.error);
                 },
             });
         }
@@ -337,9 +342,10 @@ function upload_file_chat() {
                 error: function(error) {
                     if (error.responseJSON && error.responseJSON.request_in_progress === true) {
                         waiting_alert();
+                    }else{
+                        alert(error.responseJSON.error);
                     }
                     waiting_chat = false;
-                    console.error(error.responseJSON.error);
                 }
             });
 
@@ -363,7 +369,7 @@ function remFile(element){
                         }
                     },
                     error: function(error) {
-                        console.error(error.responseJSON.error);
+                        alert(error.responseJSON.error);
                     }
                 });
         }
@@ -382,7 +388,7 @@ function resetContest(){
                 type: "POST",
                 url: "/clear_context",
                 error: function(error) {
-                    console.error(error.responseJSON.error);
+                    alert(error.responseJSON.error);
                 }
             });
 
@@ -465,7 +471,7 @@ function LogOut(){
                         window.location.href = "/auth/login";
                     },
                     error: function(error) {
-                        console.error(error.responseJSON.error);
+                        alert(error.responseJSON.error);
                     }
 
 
@@ -499,7 +505,7 @@ $(document).ready(function() {
                         $("#chat_information_Token_Messaggio").text(response.token);
                     },
                     error: function(error) {
-                        console.error(error.responseJSON.error);
+                        alert(error.responseJSON.error);
                     }
                 });
             }, 300);
@@ -649,7 +655,9 @@ function translate_file() {
             error: function(error) {
                 if (error.responseJSON && error.responseJSON.request_in_progress === true) {
                         waiting_alert();
-                    }
+                    }else{
+                     alert(error.responseJSON.error);
+                }
                 waiting_chat_traslate = false;
 
             }
@@ -765,10 +773,13 @@ function transcribe_audio(){
                  if (error.responseJSON && error.responseJSON.request_in_progress === true) {
                         waiting_alert();
                     }
+                 else{
+                     alert(error.responseJSON.error);
+                 }
                 waiting_audio= false;
                 $('#progress_bar_State').text("Nessun Caricamento");
                 $('#progress_bar_audio').css("width" , 0 + '%')
-                console.error(error.responseJSON.error);
+
             }
         });
 
