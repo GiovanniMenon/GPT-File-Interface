@@ -112,7 +112,7 @@ pre code {
     margin-left: .25rem;
     width: calc(100% - .5rem) ;
     text-align: left;
-    justify-content: right;
+
     padding:10px;
     margin-top: 15px;
 }
@@ -169,6 +169,12 @@ pre code {
     left: -20%;
     transition: all 0.3s ease-in-out;
 }
+
+.custom-width{
+    width: 97% !important;
+}
+
+
 
 
 

@@ -190,6 +190,9 @@ function sendForm() {
         }else{
             waiting_chat = true
         }
+
+
+
         $.ajax({
             type: "POST",
             url: "/process_form",
@@ -199,12 +202,13 @@ function sendForm() {
             success:function(response) {
                     update_elements(response)
                     response_val = ""
-                    if (waiting_chat) waiting_chat = false
+                    if (waiting_chat) {
+                        waiting_chat = false
+                    }
                     if (waiting_chat_traslate){
                         $('#progress_bar_trans_State').text("Nessun Caricamento");
                         $('#progress_bar_trans').css("width" , 0 + '%')
                         waiting_chat_traslate = false
-                        
                     } 
                 },
             error: function(error) {
@@ -223,7 +227,6 @@ function sendForm() {
     
 function switchCont(element) {
         /*Text Area Behaviour*/
-
         if(element.id === "cont_chat"){
             document.getElementById('cont_form_text').style.opacity = '0.5';
             document.getElementById('cont_form_text').style.height = 'auto';
@@ -419,13 +422,12 @@ function update_elements(response){
                 $("#cont_contest_file").append(file_contest_element)                                                   
         }
  
-        /* Nel caso di Stampa Inversa */
-        response.elements.reverse();
+
         for (var i = 0; i < response.elements.length; i++) {
             var element = response.elements[i];
             
             if(element.user_text){
-                var userText = $("<div>").attr("class" , "row").attr("id", "cont_user_chat").html("<pre> <span class='text-primary'> -> |</span> " + element.user_text + "</pre>");
+                var userText = $("<div>").attr("class" , "row").attr("id", "cont_user_chat").html("<pre class='w-auto me-0 ps-auto ps-2 pe-0'><span class='text-primary'><i class='fa-solid fa-angles-right'></i></pre> <pre class='custom-width ms-0 ps-3 pe-0'>" + element.user_text + "</pre>");
                 $("#cont_chat").append(userText);
             }
             if(element.response_text){
@@ -752,7 +754,12 @@ function transcribe_audio(){
                     audio_badge = true
                     let alertElement = document.getElementById('audio_badge');
                     alertElement.classList.add('visible');
+                }else {
+                    const chatDiv = document.getElementById('cont_chat');
+                    chatDiv.scrollTop = chatDiv.scrollHeight;
                 }
+
+
             }, 
             error: function(error) {
                  if (error.responseJSON && error.responseJSON.request_in_progress === true) {
@@ -786,14 +793,11 @@ function showLoadingAnimation(opt){
         if (loading_element) {
             return
         }
-        /* Nel caso di Stampa Inversa */
-        let element = $("#cont_chat").children();
-        $("#cont_chat").empty()
 
         let safeFormTextVal = escapeHtml(form_text_val);
 
         if (!translate && !audio) {
-            let userText = $("<div>").attr("class", "row").attr("id", "cont_user_chat_tmp").html("<pre> <span class='text-primary'> -> | </span>" + safeFormTextVal + "</pre>");
+            let userText = $("<div>").attr("class" , "row").attr("id", "cont_user_chat").html("<pre class='w-auto me-0 ps-auto ps-2 pe-0'><span class='text-primary'><i class='fa-solid fa-angles-right'></i></pre> <pre class='custom-width ms-0 ps-3 pe-0'>" + safeFormTextVal + "</pre>");
             $("#cont_chat").append(userText);
         }
 
@@ -801,7 +805,10 @@ function showLoadingAnimation(opt){
 
 
         $("#cont_chat").append(aiText);
-        $("#cont_chat").append(element);
+
+        const chatDiv = document.getElementById('cont_chat');
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+
 }
 
 window.onbeforeunload = function(event) {
@@ -845,6 +852,16 @@ $(document).ready(function() {
             response_val = response_val + index
 
             $('#span_tmp_chat').text(response_val)
+            if((waiting_chat && side_bar_id === 'chat_sidebar') || (waiting_chat_traslate && side_bar_id === 'translate_sidebar'))
+            {
+                const chatDiv = document.getElementById('cont_chat');
+                const isAtBottom = chatDiv.scrollTop + chatDiv.clientHeight >= chatDiv.scrollHeight - 50 ;
+
+                // Se eravamo alla fine, effettua lo scroll automatico
+                if (isAtBottom) {
+                    chatDiv.scrollTop = chatDiv.scrollHeight;
+                }
+            }
         };
 
         eventSource_Chat.onerror = function (event) {
@@ -877,19 +894,19 @@ $(document).ready(function() {
             });
         });
 
-$(document).ready(function() {
-    // Comportamento dello switch del tema dark/light
-    const themeDropdown = document.getElementById('themeDropdown');
-    const htmlElement = document.documentElement
-    themeDropdown.addEventListener('click', (event) => {
-        const selectedTheme = event.target.getAttribute('data-theme');
+    $(document).ready(function() {
+        // Comportamento dello switch del tema dark/light
+        const themeDropdown = document.getElementById('themeDropdown');
+        const htmlElement = document.documentElement
+        themeDropdown.addEventListener('click', (event) => {
+            const selectedTheme = event.target.getAttribute('data-theme');
 
-        if (selectedTheme === 'dark') {
-            htmlElement.setAttribute('data-bs-theme', 'dark');
-            themeIcon.className = 'fa-solid fa-moon';
-        } else if (selectedTheme === 'light') {
-            themeIcon.className = 'fa-solid fa-sun';
-            htmlElement.setAttribute('data-bs-theme', 'light');
-        }
-    });
-})
+            if (selectedTheme === 'dark') {
+                htmlElement.setAttribute('data-bs-theme', 'dark');
+                themeIcon.className = 'fa-solid fa-moon';
+            } else if (selectedTheme === 'light') {
+                themeIcon.className = 'fa-solid fa-sun';
+                htmlElement.setAttribute('data-bs-theme', 'light');
+            }
+        });
+    })

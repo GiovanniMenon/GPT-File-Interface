@@ -5,7 +5,6 @@ import time
 import backoff
 
 from flask import session
-from wrapt_timeout_decorator import timeout
 from app.utils.message_utils import send_sse_message, num_tokens_from_messages
 openai.api_key = os.getenv('API_KEY')
 
@@ -26,7 +25,8 @@ def chat_text_call(text):
                     'content': cont['content']
                 } for cont in session['CONTEXT']
             ],
-            stream=True
+            stream=True,
+            request_timeout=30,
         )
 
         collected_messages = ""
@@ -70,8 +70,10 @@ def translate_text_with_gpt(lang, text):
                     'content': cont['content']
                 } for cont in context_translate
             ],
-            stream=True
+            stream=True,
+            request_timeout=30,
         )
+
         collected_messages = ""
         for chunk in completion:
             chunk_message = chunk['choices'][0]['delta'].get('content', '')
@@ -110,12 +112,14 @@ def translate_file_text_with_gpt(lang, text):
                     'role': cont['role'],
                     'content': cont['content']
                 } for cont in context_translate
-            ]
+            ],
+            request_timeout=80,
         )
         return completion.choices[0].message["content"]
     except Exception as e:
         print(f"Errore : {str(e)}")
         return f"Errore nella richiesta\n{str(e)}"
+
 
 @backoff.on_exception(backoff.constant,
                       Exception,
@@ -163,7 +167,9 @@ def audio_text_call(scope, text):
                     'content': cont['content']
                 } for cont in context_translate
 
-            ])
+            ],
+            request_timeout=80,
+        )
         return completion.choices[0].message["content"]
     except Exception as e:
         print(f"{str(e)}")
@@ -174,7 +180,6 @@ def audio_text_call(scope, text):
                       Exception,
                       interval=4,  
                       max_tries=3)
-@timeout(30)
 def translate_document_text_call(lang, part):
     try:
         context_translate = [
@@ -196,7 +201,9 @@ def translate_document_text_call(lang, part):
                     'content': cont['content']
                 } for cont in context_translate
 
-            ])
+            ],
+            request_timeout=30,
+        )
 
         return completion.choices[0].message["content"]
     except Exception as e:
