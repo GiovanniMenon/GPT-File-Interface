@@ -1,6 +1,6 @@
 
     //General Page
-    const allowedExtensionsFile = ["pdf", "json", "txt", "docx", "cpp", "xlsx", "csv", "html", "py", "java", "xls"] 
+    const allowedExtensionsFile = ["pdf", "json", "txt", "docx", "cpp", "xlsx", "csv", "html", "py", "java", "xls"]
     const allowedExtensionsAudio = ["mp3", "mp4", "mpeg", "mpga", "m4a", "wav", "webm"]
     waiting_chat = false // Indica se c'e' una richiesta in corso nella schermata chat
     waiting_chat_traslate = false // Indica se c'e' una richiesta in corso nella schermata translate
@@ -13,7 +13,7 @@
     lang_option = false // Indica se il menu delle lingue e' visualizzato o meno
     audio_badge = false // Visualizzazzione del badge di notifica
     form_text_val = "" // Contiene il contenuto della richiesta
-    response_val = ""
+    response_val = "" // Contiene la risposta Stream alla richiesta
 
 
 function escapeHtml(unsafe) {
@@ -29,15 +29,14 @@ function escapeHtml(unsafe) {
     
 function check_sidebar(){
     //Verifica e regola la grandezza della interfaccia
-
         let side_bar_element = $("#cont");
         if (side_bar) {
-        side_bar_element.removeClass("offset-md-3 col-md-8");
-        side_bar_element.addClass("offset-md-4 col-md-7");
-    } else {
-        side_bar_element.removeClass("offset-md-4 col-md-7");
-        side_bar_element.addClass("offset-md-3 col-md-8");
-    }
+            side_bar_element.removeClass("offset-md-3 col-md-8");
+            side_bar_element.addClass("offset-md-4 col-md-7");
+        } else {
+            side_bar_element.removeClass("offset-md-4 col-md-7");
+            side_bar_element.addClass("offset-md-3 col-md-8");
+        }
     }
 
     
@@ -80,7 +79,6 @@ function show_elements(element) {
     let other;
 
     if (element.id === "chat_sidebar_li") {
-    
         audio = false;
         translate = false;
     } else {
@@ -105,7 +103,7 @@ function show_elements(element) {
         lang_menu.style.transform = "translateY(400%)";
     } else {
         if (side_bar_id === settings.divId) {
-           if(settings.divId == "translate_sidebar"){
+           if(settings.divId === "translate_sidebar"){
                document.getElementById('lang_menu_body').style.transform = "none"
            }
             myDiv.style.left = "-20%";
@@ -129,6 +127,8 @@ function show_elements(element) {
         
     let formData;
 
+
+
     if (lastClickedSection) {
         formData = new FormData();
         formData.append("sidebar", side_bar_id);
@@ -141,8 +141,6 @@ function show_elements(element) {
             contentType: false,
             success: function (response) {
                 update_elements(response)
-
-
 
                 if (waiting_audio && side_bar_id === 'audio_sidebar'){
                     showLoadingAnimation("audio")
@@ -170,19 +168,20 @@ function sendForm() {
             return
         }
 
-        if($("#cont_form_text").val().replace(/\s/g, '') === ""){
+        let cont_form_text = $("#cont_form_text")
+        if(cont_form_text.val().replace(/\s/g, '') === ""){
             return
         }
 
-        var formData = new FormData($("#cont_form")[0]);
+        let formData = new FormData($("#cont_form")[0]);
         formData.append("translate", translate);
 
 
         /* Reset dei valori del form*/
-        form_text_val = $("#cont_form_text").val()
+        form_text_val = cont_form_text.val()
         showLoadingAnimation("chat")
 
-        $("#cont_form_text").val("")
+        cont_form_text.val("")
 
         document.getElementById('cont_form_text').style.height = 'auto';
         document.getElementById('cont_form_input_file').value = null;    
@@ -303,7 +302,7 @@ function upload_file_chat() {
             return;
         }
     
-        for (var i = 0; i < input.files.length; i++){
+        for (let i = 0; i < input.files.length; i++){
             const fileExtension = input.files[0].name.split('.').pop().toLowerCase();
             if (!allowedExtensionsFile.includes(fileExtension)){
                 alert("Estensione non consentita")
@@ -311,8 +310,8 @@ function upload_file_chat() {
             }
         }
 
-        for (var i = 0; i < input.files.length; i++) {
-            for (var j = 0; j < childNodes.length; j++) {
+        for (let i = 0; i < input.files.length; i++) {
+            for (let j = 0; j < childNodes.length; j++) {
                     if (childNodes[j].getAttribute('data-filename') === input.files[i].name) {
                         alert("È gia presente un file con questo nome")
                         return
@@ -321,7 +320,7 @@ function upload_file_chat() {
             }
         }
         
-        for (var i = 0; i < input.files.length; i++) {
+        for (let i = 0; i < input.files.length; i++) {
             formData.append('file[]', input.files[i]);
         }
 
@@ -363,7 +362,7 @@ function remFile(element){
                     data: { file: element},
                     success:function(response) {
                         update_elements(response)
-                        childNodes = document.getElementById("cont_contest_file").children;
+                        let childNodes = document.getElementById("cont_contest_file").children;
                         if(childNodes.length < 1){
                             document.getElementById('cont_form_text').placeholder="Inserisci il tuo messaggio o un link ad una pagina web";
                         }
@@ -413,9 +412,9 @@ function update_elements(response){
         $("#chat_information_Token").text(response.information.Num_Token)
         
         // File Elements
-        for(var i = 0; i < response.file.length; i++){
-            var file_contest = response.file[i];
-            var file_contest_element = $("<div>")
+        for(let i = 0; i < response.file.length; i++){
+            let file_contest = response.file[i];
+            let file_contest_element = $("<div>")
                 .attr("class", "card text-start border-0 p-1 mt-1 mb-1 shadow-lg")
                 .attr("data-filename" , file_contest.file)
                 .html(
@@ -429,38 +428,39 @@ function update_elements(response){
         }
  
 
-        for (var i = 0; i < response.elements.length; i++) {
-            var element = response.elements[i];
-            
+        for (let i = 0; i < response.elements.length; i++) {
+            let element = response.elements[i];
+            let aiText;
             if(element.user_text){
-                var userText = $("<div>").attr("class" , "row").attr("id", "cont_user_chat").html("<pre class='w-auto me-0 ps-auto ps-2 pe-0'><span class='text-primary'><i class='fa-solid fa-angles-right'></i></pre> <pre class='custom-width ms-0 ps-3 pe-0'>" + element.user_text + "</pre>");
+                let userText = $("<div>").attr("class" , "row").attr("id", "cont_user_chat").html("<pre class='w-auto me-0 ps-auto ps-2 pe-0'><span class='text-primary'><i class='fa-solid fa-angles-right'></i></pre> <pre class='custom-width ms-0 ps-3 pe-0'>" + element.user_text + "</pre>");
                 $("#cont_chat").append(userText);
             }
             if(element.response_text){
-                var aiText = $("<div>").attr("class" ,"row bg-body rounded-3 p-3 shadow mt-2").attr("id", "cont_ai_chat").html("<pre>" + element.response_text + "</pre>");
+                aiText = $("<div>").attr("class" ,"row bg-body rounded-3 p-3 shadow mt-2").attr("id", "cont_ai_chat").html("<pre>" + element.response_text + "</pre>");
                 $("#cont_chat").append(aiText);
             }
             
             if (element.link_text) {
-                var linkText = $("<div>").attr("class" ,"d-flex p-1 shadow rounded-3 mt-4").attr("id", "cont_link_chat").html(element.link_text);
+                let linkText = $("<div>").attr("class" ,"d-flex p-1 shadow rounded-3 mt-4").attr("id", "cont_link_chat").html(element.link_text);
                 aiText.append(linkText);
             }
       
         }
+
+        const chatDiv = document.getElementById('cont_chat');
+        chatDiv.scrollTop = chatDiv.scrollHeight;
     }
             
     
     
-$(document).on('click', '.cont_button_rem_File_label', function() {
-        //Escaping dei Dati
-        var filename = $(this).data('filename');
-        var associatedButton = $("button[data-filename='" + filename + "']");
-        associatedButton.click();
-        
-    });
+    $(document).on('click', '.cont_button_rem_File_label', function() {
+            // Gestisce la logica del pulsante di rimozione dei file
+            let filename = $(this).data('filename');
+            let associatedButton = $("button[data-filename='" + filename + "']");
+            associatedButton.trigger('click');
 
+        });
 
-    
 
 function LogOut(){
     //LogOut
@@ -479,15 +479,15 @@ function LogOut(){
         }
 
     
-$(document).ready(function() {
-        var elemento = document.getElementById('cont_form_text');
+    document.addEventListener('DOMContentLoaded', function() {
+        let elemento = document.getElementById('cont_form_text');
         if (elemento) {
 
             //funzione per ritardare la chiamata ajax
             function debounce(func, wait) {
-                var timeout;
+                let timeout;
                 return function() {
-                    var context = this, args = arguments;
+                    let context = this, args = arguments;
                     clearTimeout(timeout);
                     timeout = setTimeout(function() {
                         func.apply(context, args);
@@ -496,7 +496,7 @@ $(document).ready(function() {
             }
 
             // La vera chiamata ajax
-            var delayedAjaxCall = debounce(function() {
+            let delayedAjaxCall = debounce(function() {
             $.ajax({
                     type: "POST",
                     url: "/get_token",
@@ -522,7 +522,7 @@ $(document).ready(function() {
 
             elemento.addEventListener("keydown", function(event) {
                 // Rimuove il comportamento di default quando si preme enter con quello di invio del form
-                if (event.keyCode == 13 && !event.shiftKey) {
+                if (event.key === "Enter" && !event.shiftKey) {
                   event.preventDefault(); 
                   sendForm();
                 }
@@ -536,14 +536,13 @@ $(document).ready(function() {
         }); 
 
         // Comportamento dei nav link delle sidebar
-        $(".nav-link").click(function() {
-            $(".nav-link").removeClass("active");
-            $(".nav-link").addClass("link-body-emphasis");
-            
-            $(this).addClass("active"); 
-            $(this).removeClass("link-body-emphasis");
+       $(".nav-link").on("click", function() {
+              $(".nav-link").removeClass("active");
+              $(".nav-link").addClass("link-body-emphasis");
 
-        });
+              $(this).addClass("active");
+              $(this).removeClass("link-body-emphasis");
+            });
         });
 
 // Translate Page
@@ -555,7 +554,7 @@ function change_language(element,opt) {
             button = document.getElementById("current_audiolang")
             button.textContent = element.value + " "
         } else { 
-            var ibuttons = document.querySelectorAll('.current_lang');
+            let ibuttons = document.querySelectorAll('.current_lang');
 
             ibuttons.forEach(function(ibutton) {
             ibutton.textContent = element.value + " "
@@ -604,7 +603,7 @@ function translate_file() {
     }
    
 
-    var formData = new FormData();
+    let formData = new FormData();
     formData.append("file", input.files[0]);
     formData.append("opt", $('#current_file_opt').text().trim().toLowerCase());
 
@@ -632,6 +631,8 @@ function translate_file() {
                         waiting_alert();
                     }else{
                      alert(error.responseJSON.error);
+                     $('#progress_bar_trans_State').text("Nessun Caricamento");
+                     $('#progress_bar_trans').css("width" , 0 + '%')
                 }
                 waiting_chat_traslate = false;
 
@@ -647,7 +648,7 @@ function filterLanguages(id) {
         const languages = languageList.getElementsByTagName('li');
 
         for (let i = 0; i < languages.length; i++) {
-            var language = languages[i].textContent.toLowerCase();
+            let language = languages[i].textContent.toLowerCase();
             if (language.includes(input)) {
                 languages[i].style.display = '';
                 console.log(languages[i]);
@@ -661,7 +662,7 @@ function filterLanguages(id) {
 
 function change_audioOption(element){
     // Gestisce il cambio di opzione per la trascrizione
-    button = document.getElementById("current_audioOption")
+    let button = document.getElementById("current_audioOption")
 
     button.textContent  = element.value + " "
 
@@ -731,6 +732,7 @@ function transcribe_audio(){
             success:function(response) {
                 $('#progress_bar_audio_State').text("Nessun Caricamento");
                 $('#progress_bar_audio').css("width" , 0 + '%')
+
                 update_elements(response)
                 waiting_audio = false
                 if(side_bar_id !== 'audio_sidebar'){
@@ -797,14 +799,14 @@ function showLoadingAnimation(opt){
 
 }
 
-window.onbeforeunload = function(event) {
-    // Avviso se si tenta di aggiornare la pagina con una richiesta in attesa
-    if(waiting_chat || waiting_audio || waiting_chat_traslate ){
-        event.returnValue = 'Stai lasciando la pagina prima che una delle tue richieste sia stata completata.';
-    }
-};
+    window.onbeforeunload = function(event) {
+        // Avviso se si tenta di aggiornare la pagina con una richiesta in attesa
+        if(waiting_chat || waiting_audio || waiting_chat_traslate ){
+            event.returnValue = 'Stai lasciando la pagina prima che una delle tue richieste sia stata completata.';
+        }
+    };
 
-$(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
     // Connessione SSE
     if (location.pathname === "/") {
         user_id = document.getElementById("username").getAttribute('data-value');
@@ -818,15 +820,13 @@ $(document).ready(function() {
             const index = data.index;
             const progress = data.progress;
             const opt = data.opt;
-
-            const currentWidth = $('#progress_bar_' + opt).css("width");
-            $('#progress_bar_' + opt).css("width", progress + '%')
+            let progress_bar = $('#progress_bar_' + opt)
+            progress_bar.css("width", progress + '%')
             $('#progress_bar_' + opt + '_State').text(index);
 
         };
         eventSource_Bar.onerror = function (event) {
             console.error("Errore nella connessione SSE:", event);
-
         };
 
         const eventSource_Chat = new EventSource(`/stream?channel=${user_id}/chat`);
@@ -851,9 +851,7 @@ $(document).ready(function() {
         };
 
         eventSource_Chat.onerror = function (event) {
-
             console.error("Errore nella connessione SSE:", event);
-
         };
 
     }
@@ -864,29 +862,28 @@ $(document).ready(function() {
             const setThemeBasedOnUserPreference = () => {
                 if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
                     document.documentElement.setAttribute('data-bs-theme', 'dark');
+                    themeIcon.className = 'fa-solid fa-moon';
                 } else {
                     document.documentElement.setAttribute('data-bs-theme', 'light');
+                    themeIcon.className = 'fa-solid fa-sun';
                 }
                 document.documentElement.style.display = "";
             };
 
-
-            // Imposta il tema iniziale al caricamento della pagina
             setThemeBasedOnUserPreference();
 
             // Aggiungi un listener per rilevare i cambiamenti nelle preferenze dell'utente
-            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
                 setThemeBasedOnUserPreference();
             });
         });
 
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
         // Comportamento dello switch del tema dark/light
         const themeDropdown = document.getElementById('themeDropdown');
         const htmlElement = document.documentElement
         themeDropdown.addEventListener('click', (event) => {
             const selectedTheme = event.target.getAttribute('data-theme');
-
             if (selectedTheme === 'dark') {
                 htmlElement.setAttribute('data-bs-theme', 'dark');
                 themeIcon.className = 'fa-solid fa-moon';
