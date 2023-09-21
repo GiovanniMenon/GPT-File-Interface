@@ -5,6 +5,8 @@ import time
 import backoff
 
 from flask import session
+from flask_login import current_user
+from app import db
 from app.utils.message_utils import send_sse_message, num_tokens_from_messages
 openai.api_key = os.getenv('API_KEY')
 
@@ -15,15 +17,17 @@ openai.api_key = os.getenv('API_KEY')
                       max_tries=2)
 def chat_text_call(text):
     try:
-        session['CONTEXT'].append({'role': "user", 'content': text})
-        session.modified = True
+
+        print(session['MODEL_API_OPTION_CHOOSE'])
+        current_user.user_context.append({'role': "user", 'content': text})
+        db.session.commit()
         completion = openai.ChatCompletion.create(
             model=session['MODEL_API_OPTION_CHOOSE'],
             messages=[
                 {
                     'role': cont['role'],
                     'content': cont['content']
-                } for cont in session['CONTEXT']
+                } for cont in current_user.user_context
             ],
             stream=True,
             request_timeout=30,
@@ -37,7 +41,10 @@ def chat_text_call(text):
 
         session['INFORMATION']['Num_Message'] = session['INFORMATION']['Num_Message'] + 1
         session["INFORMATION"]["Num_Token"] += num_tokens_from_messages(collected_messages)
-        session['CONTEXT'].append({"role": "assistant", "content":collected_messages})
+
+        current_user.user_context.append({"role": "assistant", "content": collected_messages})
+        db.session.commit()
+        print(current_user.user_context)
         session.modified = True
         return collected_messages
     except Exception as e:
