@@ -548,31 +548,6 @@ $(document).ready(function() {
 
 // Translate Page
 
-function change_trans_model(element) {
-    // Da rimuovere
-    // Gestisce il cambiamento nel modello di traduzione
-        if(waiting_chat_traslate){
-            waiting_alert()
-            return
-        }
-        element.classList.add("btn-primary");
-        element.classList.remove("bg-transparent");
-        if(element.id === "Google-AI" ){
-            document.getElementById("GPT-AI").classList.add("bg-transparent");
-            document.getElementById("GPT-AI").classList.remove("btn-primary");
-        }else{
-
-           // document.getElementById("Google-AI").classList.add("bg-transparent");
-           // document.getElementById("Google-AI").classList.remove("btn-primary");
-        }
-
-            $.ajax({
-                type: "POST",
-                url: "/model_trans_api",
-                data: { new_value: element.value },
-            });
-        }
-
 function change_language(element,opt) {
     // Gestisce il cambiamento della lingua sia nella traduzione che nella trascrizione.
         let button;
