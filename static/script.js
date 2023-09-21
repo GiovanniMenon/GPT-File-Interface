@@ -218,6 +218,7 @@ function sendForm() {
                         waiting_alert();
                     }else{
                         alert(error.responseJSON.error);
+                        hideLoadingAnimation()
                     }
                     response_val = ""
                     if(waiting_chat) waiting_chat = false
@@ -343,6 +344,7 @@ function upload_file_chat() {
                         waiting_alert();
                     }else{
                         alert(error.responseJSON.error);
+
                     }
                     waiting_chat = false;
                 }
@@ -633,6 +635,7 @@ function translate_file() {
                      alert(error.responseJSON.error);
                      $('#progress_bar_trans_State').text("Nessun Caricamento");
                      $('#progress_bar_trans').css("width" , 0 + '%')
+                     hideLoadingAnimation()
                 }
                 waiting_chat_traslate = false;
 
@@ -752,6 +755,7 @@ function transcribe_audio(){
                     }
                  else{
                      alert(error.responseJSON.error);
+                     hideLoadingAnimation()
                  }
                 waiting_audio= false;
                 $('#progress_bar_State').text("Nessun Caricamento");
@@ -799,6 +803,16 @@ function showLoadingAnimation(opt){
 
 }
 
+function hideLoadingAnimation(){
+        // Animazione di attesa risposta
+
+        let chat = document.getElementById("cont_chat");
+        let loading_element = chat.querySelector("#cont_ai_chat_tmp");
+
+        if (loading_element) {
+            chat.removeChild(loading_element);
+        }
+}
     window.onbeforeunload = function(event) {
         // Avviso se si tenta di aggiornare la pagina con una richiesta in attesa
         if(waiting_chat || waiting_audio || waiting_chat_traslate ){
