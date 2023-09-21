@@ -1,5 +1,6 @@
+
 from app.utils.openai_utils import chat_text_call
-from flask import render_template, request, jsonify, redirect, url_for
+from flask import render_template, request, jsonify, redirect, url_for, Response
 from flask_login import login_required, current_user, logout_user
 from app import login_manager, db
 from app.utils.file.file_utils import *
@@ -16,6 +17,15 @@ def home():
     session["ID_USER"] = current_user.id
     session.setdefault('MODEL_API_OPTION_CHOOSE', 'gpt-3.5-turbo')
     session.setdefault('LANGUAGE_OPTION_CHOOSE', 'English')
+    session.modified = True
+
+    session['ELEMENTS_TRANSLATE'] = []
+    session['ELEMENTS_AUDIO'] = []
+    session['ELEMENTS_CHAT'] = []
+    session['FILE_CONTEXT'] = []
+    session['CONTEXT'] = [{'role': "system", 'content': "Sei un assistente, hai il compito di rispondere alle mie "
+                                                        "domande,"
+                                                        "eseguire i miei ordini e di aprire i link che ti mando."}]
     session.modified = True
 
     if 'INFORMATION' not in session:
@@ -334,9 +344,8 @@ def transcribe_audio_response():
 
     current_user.has_audio_request_in_progress = True
     db.session.commit()
-
+    
     try:
-
         file = request.files['file']
 
         file_manager(file, 'audio', request.form.get('transcriptionOption'),
