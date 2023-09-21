@@ -1,4 +1,3 @@
-
 import openai
 import os
 import time
@@ -8,17 +7,17 @@ from flask import session
 from flask_login import current_user
 from app import db
 from app.utils.message_utils import send_sse_message, num_tokens_from_messages
+
 openai.api_key = os.getenv('API_KEY')
 
 
 @backoff.on_exception(backoff.constant,
                       Exception,
-                      interval=4,  
+                      interval=4,
                       max_tries=2)
 def chat_text_call(text):
     try:
 
-        print(session['MODEL_API_OPTION_CHOOSE'])
         current_user.user_context.append({'role': "user", 'content': text})
         db.session.commit()
         completion = openai.ChatCompletion.create(
@@ -44,17 +43,16 @@ def chat_text_call(text):
 
         current_user.user_context.append({"role": "assistant", "content": collected_messages})
         db.session.commit()
-        print(current_user.user_context)
         session.modified = True
         return collected_messages
     except Exception as e:
-        print(f"Errore : {str(e)}")
-        return f"Errore nella richiesta\n{str(e)}"
+        print(f"Errore nella richiesta : {str(e)} , {type(e)}")
+        raise e
 
 
 @backoff.on_exception(backoff.constant,
                       Exception,
-                      interval=4,  
+                      interval=3,
                       max_tries=2)
 def translate_text_with_gpt(lang, text):
     try:
@@ -89,13 +87,13 @@ def translate_text_with_gpt(lang, text):
 
         return collected_messages
     except Exception as e:
-        print(f"Errore : {str(e)}")
-        return f"Errore nella richiesta\n{str(e)}"
+        print(f"Errore nella richiesta : {str(e)} , {type(e)}")
+        raise e
 
 
 @backoff.on_exception(backoff.constant,
                       Exception,
-                      interval=4,
+                      interval=3,
                       max_tries=2)
 def translate_file_text_with_gpt(lang, text):
     try:
@@ -120,17 +118,17 @@ def translate_file_text_with_gpt(lang, text):
                     'content': cont['content']
                 } for cont in context_translate
             ],
-            request_timeout=80,
+            request_timeout=100,
         )
         return completion.choices[0].message["content"]
     except Exception as e:
-        print(f"Errore : {str(e)}")
-        return f"Errore nella richiesta\n{str(e)}"
+        print(f"Errore : {str(e)} , {type(e)}")
+        raise e
 
 
 @backoff.on_exception(backoff.constant,
                       Exception,
-                      interval=4,  
+                      interval=4,
                       max_tries=2)
 def transcribe_with_whisper(file_path):
     try:
@@ -138,13 +136,13 @@ def transcribe_with_whisper(file_path):
         transcript = openai.Audio.transcribe("whisper-1", audio_file)
         return transcript['text']
     except Exception as e:
-        print(f"Errore : {str(e)}")
-        return "Errore nella trascrizione: \n" + str(e)
+        print(f"Errore nella trascrizione audio: {str(e)}, {type(e)}")
+        raise e
 
 
 @backoff.on_exception(backoff.constant,
                       Exception,
-                      interval=4,  
+                      interval=4,
                       max_tries=2)
 def audio_text_call(scope, text):
     try:
@@ -180,12 +178,12 @@ def audio_text_call(scope, text):
         return completion.choices[0].message["content"]
     except Exception as e:
         print(f"{str(e)}")
-        return "Errore nella richiesta\n" + str(e)
+        raise e
 
 
 @backoff.on_exception(backoff.constant,
                       Exception,
-                      interval=4,  
+                      interval=4,
                       max_tries=3)
 def translate_document_text_call(lang, part):
     try:
@@ -215,4 +213,4 @@ def translate_document_text_call(lang, part):
         return completion.choices[0].message["content"]
     except Exception as e:
         print(f"Errore : {str(e)}")
-        return f"Errore nella richiesta\n{str(e)}"
+        raise e

@@ -1,10 +1,8 @@
-
 from app.utils.file.file_utils import write_file
 from app.utils.message_utils import num_tokens_from_messages, split_text_into_sections, send_sse_message
 from app.utils.openai_utils import audio_text_call, translate_file_text_with_gpt
 import concurrent.futures
 import functools
-
 
 
 def file_chat_builder(text, filename):
@@ -18,14 +16,15 @@ def file_chat_builder(text, filename):
     current_user.user_context.append({'role': "user", 'content': "file-name : " + filename + ", content : " + text})
 
     current_user.user_elements_chat.append({'response_text': "<span class='fs-6 fw-bold'><b>OPERAZIONE : </b> </span>",
-                                     'file_context': filename,
-                                     'link_text': "<a class='' id='cont_ai_chat_file' \
-                                     style='display:block;' > <pre> <span class='mx-auto'>" + filename +
-                                     "<b> aggiunto</b> al contesto della Chat. </span> <i class='fa-solid "
-                                     "fa-file'></i></pre> </a>"})
+                                            'file_context': filename,
+                                            'link_text': "<a class='' id='cont_ai_chat_file' \
+                                            style='display:block;' > <pre> <span class='mx-auto'>" + filename +
+                                                         "<b> aggiunto</b> al contesto della Chat. </span> <i "
+                                                         "class='fa-solid"
+                                                         "fa-file'></i></pre> </a>"})
 
 
-def file_translate_builder(text):
+def file_translate_builder(text, filename):
     # Dato un testo lo traduce e crea la risposta grafica
     from flask import session
     from flask_login import current_user
@@ -42,17 +41,15 @@ def file_translate_builder(text):
     else:
         result_print = text
     current_user.user_elements_translate.append({'response_text': result_print,
-                                          'link_text': "<a href='" + path_trascription + "' id='cont_ai_chat_file' \
-                                    style='display:block;' download> <pre> Scarica il File : " +
-                                                       " <i class='fa-solid fa-file'></i></pre> </a>"})
+                                                 'link_text': "<a href='" + path_trascription + "' "
+                                                 "id='cont_ai_chat_file' style='display:block;' download> <pre> Scarica il File " + filename + ": " +
+                                                 " <i class='fa-solid fa-file'></i></pre> </a>"})
 
 
-def file_audio_builder(text, audio_opt, audio_lang):
+def file_audio_builder(text, audio_opt, audio_lang, filename):
     # Dato un testo esegue l'opzione sul testo e crea la risposta grafica
-
-    from flask import session
     from flask_login import current_user
-    from app.utils.manager_utils import translate_manager   
+    from app.utils.manager_utils import translate_manager
     try:
         if num_tokens_from_messages(text) >= 15500:
             raise Exception("La trascrizione supera il limite di Token. TOKEN : " + str(num_tokens_from_messages(text)))
@@ -69,43 +66,46 @@ def file_audio_builder(text, audio_opt, audio_lang):
 
         if audio_opt == 'Trascrizione':
             path_trascription = write_file(result, "audio_folder")
-            session['ELEMENTS_AUDIO'].append({'response_text': result_print,
-                                              'link_text': "<a href='" + path_trascription + "' id='cont_ai_chat_file' \
-                                               style='display:block;' download> <pre> Scarica la Trascrizione : " +
-                                                           " <i class='fa-solid fa-file'></i></pre> </a>"})
+            current_user.user_elements_audio.append({'response_text': result_print,
+                                                     'link_text': "<a href='" + path_trascription + "' id='cont_ai_chat_file' \
+                                               style='display:block;' download> <pre> Scarica la Trascrizione di " +
+                                                                  filename + " : " +
+                                                                  " <i class='fa-solid fa-file'></i></pre> </a>"})
         else:
             path_trascription_opt = write_file(result, "audio_folder")
             path_trascription = write_file(text, "audio_folder")
-            session['ELEMENTS_AUDIO'].append(
+            current_user.user_elements_audio.append(
                 {'response_text': result_print,
                  'link_text': "<a href='" + path_trascription_opt + "' ""id='cont_ai_chat_file' \
                   style='display:block;' download> <pre> Scarica il file : " \
-                  " <i class='fa-solid fa-file'></i></pre>" 
-                  "<a href='" + path_trascription + "' id='cont_ai_chat_file' \
-                  style='display:block ;' class='mt-2' download> <pre> Scarica la Trascrizione : " +
-                  " <i class='fa-solid fa-file'></i></pre> </a>"})
+                                                                    " <i class='fa-solid fa-file'></i></pre>"
+                                                                    "<a href='" + path_trascription + "' id='cont_ai_chat_file' \
+                  style='display:block ;' class='mt-2' download> <pre> Scarica la Trascrizione di " + filename + " : " +
+                              " <i class='fa-solid fa-file'></i></pre> </a>"})
 
-    except Exception as e:
+    except Exception:
         if audio_opt == 'Trascrizione':
             words = text.split()
             result_print = " ".join(words[:100]) + " ...." if len(words) > 100 else text
             path_trascription = write_file(text, "audio_folder")
             current_user.user_elements_audio.append({'response_text': result_print,
-                                              'link_text': "<a href='" + path_trascription + "' id='cont_ai_chat_file' \
-                                               style='display:block;' download> <pre> Scarica la Trascrizione : " +
-                                                           " <i class='fa-solid fa-file'></i></pre> </a>"})
+                                                     'link_text': "<a href='" + path_trascription +
+                                                                  "' id='cont_ai_chat_file style='display:block;' download> <pre> " \
+                                                                  "Scarica la Trascrizione di " + filename + " :  <i "
+                                                                                                             "class='fa-solid "
+                                                                                                             "fa-file'></i></pre> "
+                                                                                                             "</a>"})
         else:
             count = 0
             progress = 75
             if audio_opt == 'Traduzione':
-                segments = split_text_into_sections(text, 3500)
+                segments = split_text_into_sections(text, 2000)
                 with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
                     translate_call_with_lang = functools.partial(translate_file_text_with_gpt, audio_lang)
 
                     futures = [executor.submit(translate_call_with_lang, segment) for segment in segments]
 
                     translate_transcript = []
-
                     for future in futures:
                         try:
                             translate_transcript.append(future.result(timeout=250))
@@ -149,7 +149,7 @@ def file_audio_builder(text, audio_opt, audio_lang):
                 {'response_text': result_print,
                  'link_text': "<a href='" + path_trascription_opt + "' ""id='cont_ai_chat_file' \
                              style='display:block;' download> <pre> Scarica il file : " \
-                             " <i class='fa-solid fa-file'></i></pre>"
-                             "<a href='" + path_trascription + "' id='cont_ai_chat_file' \
-                             style='display:block ;' class='mt-2' download> <pre> Scarica la Trascrizione : " +
+                                                                    " <i class='fa-solid fa-file'></i></pre>"
+                                                                    "<a href='" + path_trascription + "' id='cont_ai_chat_file' \
+                             style='display:block ;' class='mt-2' download> <pre> Scarica la Trascrizione " + filename + " : " +
                               " <i class='fa-solid fa-file'></i></pre> </a>"})

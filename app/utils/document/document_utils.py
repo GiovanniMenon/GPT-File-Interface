@@ -3,14 +3,13 @@ import functools
 
 import unicodedata
 
-from docx import Document
 from app.utils.message_utils import send_sse_message
 from app.utils.openai_utils import translate_document_text_call
 
 
 def contains_only_punctuation(text):
     # Controlla che il testo non abbia solo punteggiatura
-    
+
     return all(unicodedata.category(char).startswith('P') for char in text)
 
 
@@ -29,12 +28,11 @@ def docx_file_translate_gpt(segments, lang):
             try:
                 translations.append(future.result(timeout=150))
                 count += 1
-                progress += 55/len(segments)
-                send_sse_message("bar",f"Traduzione: {count}/{len(segments)}", progress, "trans")
+                progress += 55 / len(segments)
+                send_sse_message("bar", f"Traduzione: {count}/{len(segments)}", progress, "trans")
             except Exception as e:
                 executor.shutdown(wait=False, cancel_futures=True)
                 print(f"Errore durante la traduzione: {str(e)}")
-                raise
+                raise e
 
     return translations
-

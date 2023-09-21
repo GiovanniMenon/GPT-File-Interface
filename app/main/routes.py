@@ -10,7 +10,6 @@ from flask import Blueprint
 main = Blueprint('main', __name__)
 
 
-
 @main.route('/', methods=["GET", "POST"])
 @login_required
 def home():
@@ -96,15 +95,20 @@ def text_form_response():
         }
 
         if translate == "true":
-            response = translate_manager(text, session['LANGUAGE_OPTION_CHOOSE'], 'text')
-
+            try:
+                response = translate_manager(text, session['LANGUAGE_OPTION_CHOOSE'], 'text')
+            except Exception as e:
+                response = f"Errore nella richiesta\n{str(e)}"
             current_user.user_elements_translate.append({'response_text': decode(response)})
             db.session.commit()
 
             data['elements'] = current_user.user_elements_translate
             data['section'] = 'translate_sidebar'
         else:
-            response = chat_text_call(text)
+            try:
+                response = chat_text_call(text)
+            except Exception as e:
+                response = f"Errore nella richiesta\n{str(e)}"
             current_user.user_elements_chat.append({'user_text': escaped_text, 'response_text': decode(response)})
             db.session.commit()
 
@@ -147,7 +151,7 @@ def upload_file():
         return jsonify(data)
     except Exception as e:
         print(f"Errore durante l'estrazione del contenuto del file: {str(e)}")
-        return jsonify({"error": "Errore nel caricamento del file.\nFile non caricato.\n" + str(e)}), 500
+        return jsonify({"error": "File corrotto o non utilizzabile.\n" + str(e)}), 500
     finally:
         current_user.has_chat_request_in_progress = False
         db.session.commit()
@@ -313,7 +317,7 @@ def translate_file_response():
         return jsonify(data)
     except Exception as e:
         print(f"Errore : {str(e)}")
-        return jsonify({"error": "Errore durante la traduzione dei file"}), 500
+        return jsonify({"error": f"Errore durante la traduzione dei file\n{str(e)}"}), 500
     finally:
         current_user.has_chat_request_in_progress = False
         db.session.commit()

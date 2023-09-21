@@ -64,7 +64,7 @@ def send_sse_message(channel, message, progress=0, opt=""):
     from flask import current_app as app
     from flask import session
     channel_with_id = str(session["ID_USER"]) + '/' + channel
-    data = {'index': message, 'progress' : progress, "opt": opt}
+    data = {'index': message, 'progress': progress, "opt": opt}
 
     with app.app_context():
         from flask_sse import sse
