@@ -65,15 +65,18 @@ pre code {
 
 
 
-#span_tmp::after {
+#span_tmp_chat::after, #span_tmp_audio::after{
     content: "";
-    width: 8px;
+    width: 4px;
     height: 20px;
     background: #0d6efd;
     display: inline-block;
+
+}
+#span_tmp_audio::after{
+    width: 8px;
     animation: blink 1.25s steps(2) infinite;
 }
-
 
 #cont_link_chat{
     height: 100%;
@@ -109,7 +112,7 @@ pre code {
     margin-left: .25rem;
     width: calc(100% - .5rem) ;
     text-align: left;
-    justify-content: right;
+
     padding:10px;
     margin-top: 15px;
 }
@@ -166,6 +169,12 @@ pre code {
     left: -20%;
     transition: all 0.3s ease-in-out;
 }
+
+.custom-width{
+    width: 97% !important;
+}
+
+
 
 
 

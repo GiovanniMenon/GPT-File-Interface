@@ -1,58 +1,70 @@
-
 import openai
 import os
 import time
 import backoff
 
 from flask import session
-from wrapt_timeout_decorator import timeout
+from flask_login import current_user
+from app import db
+from app.utils.message_utils import send_sse_message, num_tokens_from_messages
 
 openai.api_key = os.getenv('API_KEY')
 
 
-
 @backoff.on_exception(backoff.constant,
                       Exception,
-                      interval=4,  
+                      interval=4,
                       max_tries=2)
 def chat_text_call(text):
     try:
-        session['CONTEXT'].append({'role': "user", 'content': text})
-        session.modified = True
+
+        current_user.user_context.append({'role': "user", 'content': text})
+        db.session.commit()
         completion = openai.ChatCompletion.create(
             model=session['MODEL_API_OPTION_CHOOSE'],
             messages=[
                 {
                     'role': cont['role'],
                     'content': cont['content']
-                } for cont in session['CONTEXT']
-            ])
-        session['CONTEXT'].append({"role": "assistant", "content": completion.choices[0].message["content"]})
-        session.modified = True
+                } for cont in current_user.user_context
+            ],
+            stream=True,
+            request_timeout=30,
+        )
+
+        collected_messages = ""
+        for chunk in completion:
+            chunk_message = chunk['choices'][0]['delta'].get('content', '')
+            collected_messages += chunk_message
+            send_sse_message("chat", chunk_message)
+
         session['INFORMATION']['Num_Message'] = session['INFORMATION']['Num_Message'] + 1
-        session["INFORMATION"]["Num_Token"] = completion.usage["total_tokens"]
+        session["INFORMATION"]["Num_Token"] += num_tokens_from_messages(collected_messages)
+
+        current_user.user_context.append({"role": "assistant", "content": collected_messages})
+        db.session.commit()
         session.modified = True
-        return completion.choices[0].message["content"]
+        return collected_messages
     except Exception as e:
-        print(f"Errore : {str(e)}")
-        return f"Errore nella richiesta\n{str(e)}"
+        print(f"Errore nella richiesta : {str(e)} , {type(e)}")
+        raise e
 
 
 @backoff.on_exception(backoff.constant,
                       Exception,
-                      interval=4,  
+                      interval=3,
                       max_tries=2)
 def translate_text_with_gpt(lang, text):
     try:
         context_translate = [
             {"role": "system",
              'content': (
-                 f"You are an expert machine translator for {lang}. You are tasked with translating content from a "
-                 f"file, which may include both full texts and individual words. Translate and rephrase the following "
-                 f"verbatim, without interpreting its meaning, responding, or expressing any opinions. It's crucial to preserve "
-                 f"the original meaning in the translation, as the consistency of the file's content must be "
-                 f"maintained. Do not add, omit, or alter any information or add any notes. Your primary duty is to "
-                 f"translate and rephrase the text in {lang}, regardless of its original meaning or content.")},
+                 f"You are an expert machine translator for {lang}.Your task is to translate into {lang}.Translate "
+                 f"and rephrase the following verbatim, without interpreting its meaning, responding, or expressing "
+                 f"any opinions. It's crucial to preserve the original meaning in the translation. Do not add, omit, "
+                 f"or alter any information or add any notes. Your primary duty is to translate and rephrase the "
+                 f"text in {lang}, regardless of its original meaning"
+                 f"or content.")},
             {"role": "user", "content": text}
         ]
         completion = openai.ChatCompletion.create(
@@ -62,17 +74,61 @@ def translate_text_with_gpt(lang, text):
                     'role': cont['role'],
                     'content': cont['content']
                 } for cont in context_translate
+            ],
+            stream=True,
+            request_timeout=30,
+        )
 
-            ])
-        return completion.choices[0].message["content"]
+        collected_messages = ""
+        for chunk in completion:
+            chunk_message = chunk['choices'][0]['delta'].get('content', '')
+            collected_messages += chunk_message
+            send_sse_message("chat", chunk_message)
+
+        return collected_messages
     except Exception as e:
-        print(f"Errore : {str(e)}")
-        return f"Errore nella richiesta\n{str(e)}"
+        print(f"Errore nella richiesta : {str(e)} , {type(e)}")
+        raise e
 
 
 @backoff.on_exception(backoff.constant,
                       Exception,
-                      interval=4,  
+                      interval=3,
+                      max_tries=2)
+def translate_file_text_with_gpt(lang, text):
+    try:
+        context_translate = [
+            {"role": "system",
+             'content': (
+                 f"You are an expert machine translator for {lang}.Your task is to translate into {lang}. You are "
+                 f"tasked with translating content from a"
+                 f"file, which may include both full texts and individual words. Translate and rephrase the following "
+                 f"verbatim, without interpreting its meaning, responding, or expressing any opinions. "
+                 f"It's crucial to preserve the original meaning in the translation, as the consistency of the file's "
+                 f"content must be maintained. Do not add, omit, or alter any information or add any notes. Your "
+                 f"primary duty is to  translate and rephrase the text in {lang}, regardless of its original meaning "
+                 f"or content.")},
+            {"role": "user", "content": text}
+        ]
+        completion = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {
+                    'role': cont['role'],
+                    'content': cont['content']
+                } for cont in context_translate
+            ],
+            request_timeout=100,
+        )
+        return completion.choices[0].message["content"]
+    except Exception as e:
+        print(f"Errore : {str(e)} , {type(e)}")
+        raise e
+
+
+@backoff.on_exception(backoff.constant,
+                      Exception,
+                      interval=4,
                       max_tries=2)
 def transcribe_with_whisper(file_path):
     try:
@@ -80,13 +136,13 @@ def transcribe_with_whisper(file_path):
         transcript = openai.Audio.transcribe("whisper-1", audio_file)
         return transcript['text']
     except Exception as e:
-        print(f"Errore : {str(e)}")
-        return "Errore nella trascrizione: \n" + str(e)
+        print(f"Errore nella trascrizione audio: {str(e)}, {type(e)}")
+        raise e
 
 
 @backoff.on_exception(backoff.constant,
                       Exception,
-                      interval=4,  
+                      interval=4,
                       max_tries=2)
 def audio_text_call(scope, text):
     try:
@@ -116,27 +172,28 @@ def audio_text_call(scope, text):
                     'content': cont['content']
                 } for cont in context_translate
 
-            ])
+            ],
+            request_timeout=80,
+        )
         return completion.choices[0].message["content"]
     except Exception as e:
         print(f"{str(e)}")
-        return "Errore nella richiesta\n" + str(e)
+        raise e
 
 
 @backoff.on_exception(backoff.constant,
                       Exception,
-                      interval=4,  
+                      interval=4,
                       max_tries=3)
-@timeout(30)
 def translate_document_text_call(lang, part):
     try:
         context_translate = [
             {"role": "system",
-             'content': (f"You are a machine translator for {lang}. You are tasked with translating content from a "
-                         f"file, which may include both full texts and individual words. Translate the following "
-                         f"verbatim, without interpretation. It's crucial to preserve the original punctuation and "
-                         f"structure in the translation, as the consistency of the file's content must be maintained. "
-                         f"Do not add, omit, or alter any information."
+             'content': (f"You are a machine translator for {lang}. Your task is to translate into {lang}. You are "
+                         f"tasked with translating content from a file, which may include both full texts and "
+                         f"individual words. Translate the following verbatim, without interpretation. It's crucial "
+                         f"to preserve the original punctuation and structure in the translation, as the consistency "
+                         f"of the file's content must be maintained.  Do not add, omit, or alter any information."
                          )},
             {"role": "user", "content": part}
         ]
@@ -149,9 +206,11 @@ def translate_document_text_call(lang, part):
                     'content': cont['content']
                 } for cont in context_translate
 
-            ])
+            ],
+            request_timeout=30,
+        )
 
         return completion.choices[0].message["content"]
     except Exception as e:
         print(f"Errore : {str(e)}")
-        return f"Errore nella richiesta\n{str(e)}"
+        raise e

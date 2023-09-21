@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html  data-bs-theme="light">
+<html style="display: none;">
 <head>
     <title>Login</title>
 
@@ -70,6 +70,24 @@ themeDropdown.addEventListener('click', (event) => {
     }
 });
 
+ document.addEventListener('DOMContentLoaded', function() {
+            const setThemeBasedOnUserPreference = () => {
+                if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.setAttribute('data-bs-theme', 'dark');
+                } else {
+                    document.documentElement.setAttribute('data-bs-theme', 'light');
+                }
+                document.documentElement.style.display = "";
+            };
+
+            // Imposta il tema iniziale al caricamento della pagina
+            setThemeBasedOnUserPreference();
+
+            // Aggiungi un listener per rilevare i cambiamenti nelle preferenze dell'utente
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+                setThemeBasedOnUserPreference();
+            });
+        });
 
 </script>
 
@@ -86,6 +104,7 @@ themeDropdown.addEventListener('click', (event) => {
                     group.classList.remove('shake');
                 }, 1000);
         })
+
 
     </script>
 

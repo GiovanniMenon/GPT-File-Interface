@@ -57,9 +57,8 @@ def extract_text_from_docx(docx_file):
         doc = Document(docx_file)
 
         for paragraph in doc.paragraphs:
-            for run in paragraph.runs:
-                if run.text and re.sub(r'[ \t]', '', run.text) != "" and not (contains_only_punctuation(run.text.replace(" ", ""))):
-                    parts.append(run.text)
+            if paragraph.text and re.sub(r'[ \t]', '', paragraph.text) != "" and not (contains_only_punctuation(paragraph.text.replace(" ", ""))):
+                parts.append(paragraph.text)
 
         for section in doc.sections:
             header = section.header
@@ -93,17 +92,16 @@ def write_text_to_docx(docx_file, translations, type):
     translated_index = 0
 
     for paragraph in doc.paragraphs:
-        for run in paragraph.runs:
-            if run.text and re.sub(r'[ \t]', '', run.text) != "" and not contains_only_punctuation(
-                    run.text.replace(" ", "")):
-                translation = translations[translated_index]
-                translated_index += 1
+        if paragraph.text and re.sub(r'[ \t]', '',  paragraph.text) != "" and not contains_only_punctuation(
+                paragraph.text.replace(" ", "")):
 
-                if run.text.startswith(' ') and not translation.startswith(' '):
-                    translation = ' ' + translation
-                if run.text.endswith(' ') and not translation.endswith(' '):
-                    translation += ' '
-                run.text = translation
+            translation = translations[translated_index]
+            translated_index += 1
+            if paragraph.text.startswith(' ') and not translation.startswith(' '):
+                translation = ' ' + translation
+            if paragraph.text.endswith(' ') and not translation.endswith(' '):
+                translation += ' '
+            paragraph.text = translation
 
     for section in doc.sections:
         header = section.header

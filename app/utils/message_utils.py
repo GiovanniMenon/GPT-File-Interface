@@ -58,13 +58,14 @@ def split_text_into_sections(text, max_tokens, model="gpt-3.5-turbo-0613"):
     return sections
 
 
-def send_sse_message(message, progress, opt):
+def send_sse_message(channel, message, progress=0, opt=""):
     # Dato un messaggio, progresso e opt effettua una richiesta SSE al client
 
     from flask import current_app as app
     from flask import session
-    data = {'index': message, 'progress' : progress, "opt": opt}
-    
+    channel_with_id = str(session["ID_USER"]) + '/' + channel
+    data = {'index': message, 'progress': progress, "opt": opt}
+
     with app.app_context():
         from flask_sse import sse
-        sse.publish(data, channel=session["ID_USER"])
+        sse.publish(data, channel=channel_with_id)

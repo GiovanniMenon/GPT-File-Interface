@@ -12,7 +12,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = True
 
     SESSION_TYPE = 'filesystem'
-    SESSION_PERMANENT = False
+    SESSION_PERMANENT = True
     SESSION_USE_SIGNER = True
 
     REDIS_URL = "redis://localhost:6379/0"
