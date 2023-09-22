@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, request 
 from flask_login import login_user
-from app.user_model import User
+from src.user_model import User
 
 
 auth = Blueprint('auth', __name__)
@@ -21,3 +21,5 @@ def login():
             return render_template('login.html', error=True)
 
     return render_template('login.html')
+
+

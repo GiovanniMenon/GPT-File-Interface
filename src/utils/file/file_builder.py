@@ -1,6 +1,6 @@
-from app.utils.file.file_utils import write_file
-from app.utils.message_utils import num_tokens_from_messages, split_text_into_sections, send_sse_message
-from app.utils.openai_utils import audio_text_call, translate_file_text_with_gpt
+from src.utils.file.file_utils import write_file
+from src.utils.message_utils import num_tokens_from_messages, split_text_into_sections, send_sse_message
+from src.utils.openai_utils import audio_text_call, translate_file_text_with_gpt
 import concurrent.futures
 import functools
 
@@ -28,7 +28,7 @@ def file_translate_builder(text, filename):
     # Dato un testo lo traduce e crea la risposta grafica
     from flask import session
     from flask_login import current_user
-    from app.utils.manager_utils import translate_manager
+    from src.utils.manager_utils import translate_manager
 
     text = translate_manager(text, session['LANGUAGE_OPTION_CHOOSE'])
     send_sse_message("bar", "Elaboro Traduzione", 100, "trans")
@@ -49,7 +49,7 @@ def file_translate_builder(text, filename):
 def file_audio_builder(text, audio_opt, audio_lang, filename):
     # Dato un testo esegue l'opzione sul testo e crea la risposta grafica
     from flask_login import current_user
-    from app.utils.manager_utils import translate_manager
+    from src.utils.manager_utils import translate_manager
     try:
         if num_tokens_from_messages(text) >= 15500:
             raise Exception("La trascrizione supera il limite di Token. TOKEN : " + str(num_tokens_from_messages(text)))
@@ -90,7 +90,7 @@ def file_audio_builder(text, audio_opt, audio_lang, filename):
             path_trascription = write_file(text, "audio_folder")
             current_user.user_elements_audio.append({'response_text': result_print,
                                                      'link_text': "<a href='" + path_trascription +
-                                                                  "' id='cont_ai_chat_file style='display:block;' download> <pre> " \
+                                                                  "' id='cont_ai_chat_file' style='display:block;' download> <pre> " \
                                                                   "Scarica la Trascrizione di " + filename + " :  <i "
                                                                                                              "class='fa-solid "
                                                                                                              "fa-file'></i></pre> "

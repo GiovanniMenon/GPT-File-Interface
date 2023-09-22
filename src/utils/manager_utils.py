@@ -4,40 +4,39 @@ import os
 
 from flask import session
 
-from app.utils.document.document_builder import document_translate_builder
-from app.utils.file.file_builder import file_chat_builder, file_translate_builder, file_audio_builder
-from app.utils.file.file_utils import is_audio, path_file, remove_selected_file, \
+from src.utils.document.document_builder import document_translate_builder
+from src.utils.file.file_builder import file_chat_builder, file_translate_builder, file_audio_builder
+from src.utils.file.file_utils import is_audio, path_file, remove_selected_file, \
     save_file, compress_audio, split_audio
-from app.utils.message_utils import num_tokens_from_messages, split_text_into_sections, send_sse_message
-from app.utils.openai_utils import translate_text_with_gpt, transcribe_with_whisper, translate_file_text_with_gpt
+from src.utils.message_utils import num_tokens_from_messages, split_text_into_sections, send_sse_message
+from src.utils.openai_utils import translate_text_with_gpt, transcribe_with_whisper, translate_file_text_with_gpt
 from werkzeug.utils import secure_filename
 
-from app.utils.parser.parser import extract_file_content
+from src.utils.parser.parser import extract_file_content
 
 
 def file_manager(file, scope="chat", opt="", audio_lang=""):
     # Dato un file, scope e le opzioni richiama i corrispettivi builder e parser per gestirlo
-
     path_ = path_file(file)
     filename = file.filename
     save_file(file, path_)
-
-    if scope == 'audio':
-
-        text = audio_manager(path_)
-    else:
-        text = extract_file_content(path_, secure_filename(filename))
-
-    if scope == "chat":
-        file_chat_builder(text, filename)
-    elif scope == "translate":
-        if opt == 'documento':
-            document_translate_builder(path_, filename)
+    try:
+        if scope == 'audio':
+            text = audio_manager(path_)
         else:
-            file_translate_builder(text, filename)
-    elif scope == "audio":
-        file_audio_builder(text, opt, audio_lang, filename)
-    remove_selected_file(path_)
+            text = extract_file_content(path_, secure_filename(filename))
+
+        if scope == "chat":
+            file_chat_builder(text, filename)
+        elif scope == "translate":
+            if opt == 'documento':
+                document_translate_builder(path_, filename)
+            else:
+                file_translate_builder(text, filename)
+        elif scope == "audio":
+            file_audio_builder(text, opt, audio_lang, filename)
+    finally:
+        remove_selected_file(path_)
 
 
 def translate_manager(text, lang, opt="trans"):
@@ -93,5 +92,4 @@ def audio_manager(path_):
         return transcripts_text
     else:
         send_sse_message("bar", "Elaborazione dell trascrizione", 80, 'audio')
-
         return transcribe_with_whisper(path_)

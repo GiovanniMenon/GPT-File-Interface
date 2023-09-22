@@ -7,7 +7,7 @@ import os
 from docx import Document
 import json
 
-from app.utils.message_utils import send_sse_message
+from src.utils.message_utils import send_sse_message
 
 
 def allowed_file(filename, extension):

@@ -5,8 +5,8 @@ import backoff
 
 from flask import session
 from flask_login import current_user
-from app import db
-from app.utils.message_utils import send_sse_message, num_tokens_from_messages
+from src import db
+from src.utils.message_utils import send_sse_message, num_tokens_from_messages
 
 openai.api_key = os.getenv('API_KEY')
 
@@ -193,7 +193,7 @@ def translate_document_text_call(lang, part):
                          f"tasked with translating content from a file, which may include both full texts and "
                          f"individual words. Translate the following verbatim, without interpretation. It's crucial "
                          f"to preserve the original punctuation and structure in the translation, as the consistency "
-                         f"of the file's content must be maintained.  Do not add, omit, or alter any information."
+                         f"of the file's content must be maintained.  Do not add, omit, or alter any information. "
                          )},
             {"role": "user", "content": part}
         ]

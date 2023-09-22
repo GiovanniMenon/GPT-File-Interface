@@ -1,7 +1,7 @@
 import os
 
-from app.utils.document.document_utils import contains_only_punctuation
-from app.utils.file.file_utils import allowed_file, create_path
+from src.utils.document.document_utils import contains_only_punctuation
+from src.utils.file.file_utils import allowed_file, create_path
 from docx import Document
 from PyPDF2 import PdfReader
 
@@ -150,4 +150,5 @@ def write_text_to_docx(docx_file, translations, type):
     if not os.path.exists(os.path.dirname(file_path)):
         os.makedirs(os.path.dirname(file_path))
     doc.save(file_path)
+
     return relative_path

@@ -3,7 +3,7 @@ from flask import Flask
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
-from app.app_config import Config
+from src.app_config import Config
 from flask_sse import sse
 
 db = SQLAlchemy()
@@ -20,11 +20,11 @@ def create_app():
 
     @login_manager.user_loader
     def load_user(user_id):
-        from app.user_model import User
+        from src.user_model import User
         return User.query.get(int(user_id))
 
-    from app.main.routes import main
-    from app.auth.auth_routes import auth
+    from src.main.routes import main
+    from src.auth.auth_routes import auth
 
     app.register_blueprint(main)
 

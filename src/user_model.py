@@ -1,5 +1,5 @@
 
-from app import db
+from src import db
 from flask_login import UserMixin
 from sqlalchemy.dialects.sqlite import JSON
 from sqlalchemy.ext.mutable import MutableList
