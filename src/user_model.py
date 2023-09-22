@@ -10,6 +10,10 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(150), nullable=False)
 
     # Campi per controllare che un utente non abbia una richiesta gia' in corso.
+    user_elements_token = db.Column(db.Integer, default=0)
+    user_elements_message = db.Column(db.Integer, default=0)
+
+    # Campi per controllare che un utente non abbia una richiesta gia' in corso.
     has_chat_request_in_progress = db.Column(db.Boolean, default=False)
     has_audio_request_in_progress = db.Column(db.Boolean, default=False)
 

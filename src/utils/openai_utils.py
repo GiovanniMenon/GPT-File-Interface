@@ -38,11 +38,15 @@ def chat_text_call(text):
             collected_messages += chunk_message
             send_sse_message("chat", chunk_message)
 
-        session['INFORMATION']['Num_Message'] = session['INFORMATION']['Num_Message'] + 1
-        session["INFORMATION"]["Num_Token"] += num_tokens_from_messages(collected_messages)
-
+        current_user.user_elements_message += 1
+        current_user.user_elements_token += num_tokens_from_messages(collected_messages)
         current_user.user_context.append({"role": "assistant", "content": collected_messages})
         db.session.commit()
+
+        session['INFORMATION']['Num_Message'] = current_user.user_elements_message
+        session["INFORMATION"]["Num_Token"] = current_user.user_elements_token
+
+
         session.modified = True
         return collected_messages
     except Exception as e:

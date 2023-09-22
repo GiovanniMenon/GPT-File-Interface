@@ -19,7 +19,7 @@ def home():
     session.modified = True
 
     if 'INFORMATION' not in session:
-        session['INFORMATION'] = {"Num_Message": 0, "Num_Token": 0}
+        session['INFORMATION'] = {"Num_Message": current_user.user_elements_message, "Num_Token": current_user.user_elements_token}
     session.modified = True
 
     if current_user.user_elements_chat is None:
@@ -206,8 +206,11 @@ def clear_context():
         current_user.user_file_in_context = []
         current_user.user_context = []
         current_user.user_context.append({'role': "system", 'content': "You are an assistant"})
+        current_user.user_elements_message = 0
+        current_user.user_elements_token = 0
 
         db.session.commit()
+
         session['INFORMATION'].clear()
         session['INFORMATION'] = {"Num_Message": 0, "Num_Token": 0}
         session.modified = True

@@ -12,10 +12,14 @@ import re
 
 def extract_file_content(file_path, file_name):
     # Data la path e il nome di un file ritorna il testo contenuto.
-
     if allowed_file(file_name, {"xls", 'xlsx'}):
-        df = pd.read_excel(file_path)
-        file_text = df.to_string()
+        all_sheets = pd.read_excel(file_path, sheet_name=None)
+        file_text = ""
+        for sheet_name, df in all_sheets.items():
+            file_text += f"Sheet Name: {sheet_name}\n"
+            file_text += df.to_string()
+            file_text += "\n\n"
+        
     elif allowed_file(file_name, {"csv"}):
         df = pd.read_csv(file_path)
         file_text = df.to_string()
