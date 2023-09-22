@@ -8,7 +8,6 @@
     translate = false // Indica se siamo nella schermata di traduzione
     side_bar = false // Indica se la side bar e' attiva
     audio = false // Indica se siamo nella schermata di audio
-    cluster = true // Indica se siamo nella schermata di clustering
     side_bar_id = "chat_sidebar" // Memorizza l'id dell'ultima sidebar attiva
     lang_option = false // Indica se il menu delle lingue e' visualizzato o meno
     audio_badge = false // Visualizzazzione del badge di notifica
@@ -242,7 +241,6 @@ function switchCont(element) {
         }
                       
     }
-
     
 function change_chat_model(element) {
     /*Model Selection*/
@@ -831,12 +829,15 @@ function hideLoadingAnimation(){
 
             const data = JSON.parse(event.data);
             console.log("Ricevuto evento:", data);
+
             const index = data.index;
             const progress = data.progress;
             const opt = data.opt;
+
             let progress_bar = $('#progress_bar_' + opt)
             progress_bar.css("width", progress + '%')
             $('#progress_bar_' + opt + '_State').text(index);
+            
 
         };
         eventSource_Bar.onerror = function (event) {
