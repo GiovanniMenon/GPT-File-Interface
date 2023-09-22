@@ -1,11 +1,10 @@
-
-from app.utils.openai_utils import chat_text_call
-from flask import render_template, request, jsonify, redirect, url_for, Response
+from src.utils.openai_utils import chat_text_call
+from flask import render_template, request, jsonify, redirect, url_for
 from flask_login import login_required, current_user, logout_user
-from app import login_manager, db
-from app.utils.file.file_utils import *
-from app.utils.message_utils import *
-from app.utils.manager_utils import *
+from src import login_manager, db
+from src.utils.file.file_utils import *
+from src.utils.message_utils import *
+from src.utils.manager_utils import *
 from flask import Blueprint
 
 main = Blueprint('main', __name__)
@@ -19,17 +18,8 @@ def home():
     session.setdefault('LANGUAGE_OPTION_CHOOSE', 'English')
     session.modified = True
 
-    session['ELEMENTS_TRANSLATE'] = []
-    session['ELEMENTS_AUDIO'] = []
-    session['ELEMENTS_CHAT'] = []
-    session['FILE_CONTEXT'] = []
-    session['CONTEXT'] = [{'role': "system", 'content': "Sei un assistente, hai il compito di rispondere alle mie "
-                                                        "domande,"
-                                                        "eseguire i miei ordini e di aprire i link che ti mando."}]
-    session.modified = True
-
     if 'INFORMATION' not in session:
-        session['INFORMATION'] = {"Num_Message": 0, "Num_Token": 0}
+        session['INFORMATION'] = {"Num_Message": current_user.user_elements_message, "Num_Token": current_user.user_elements_token}
     session.modified = True
 
     if current_user.user_elements_chat is None:
@@ -216,8 +206,11 @@ def clear_context():
         current_user.user_file_in_context = []
         current_user.user_context = []
         current_user.user_context.append({'role': "system", 'content': "You are an assistant"})
+        current_user.user_elements_message = 0
+        current_user.user_elements_token = 0
 
         db.session.commit()
+
         session['INFORMATION'].clear()
         session['INFORMATION'] = {"Num_Message": 0, "Num_Token": 0}
         session.modified = True
@@ -297,7 +290,6 @@ def logOut_route():
 def change_lang():
     session['LANGUAGE_OPTION_CHOOSE'] = request.form.get('new_value')
 
-    print(session['LANGUAGE_OPTION_CHOOSE'])
     return jsonify({"Message": "Modello Cambiato"})
 
 
@@ -344,8 +336,9 @@ def transcribe_audio_response():
 
     current_user.has_audio_request_in_progress = True
     db.session.commit()
-    
+
     try:
+
         file = request.files['file']
 
         file_manager(file, 'audio', request.form.get('transcriptionOption'),

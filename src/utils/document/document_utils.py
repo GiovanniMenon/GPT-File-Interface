@@ -3,8 +3,8 @@ import functools
 
 import unicodedata
 
-from app.utils.message_utils import send_sse_message
-from app.utils.openai_utils import translate_document_text_call
+from src.utils.message_utils import send_sse_message
+from src.utils.openai_utils import translate_document_text_call
 
 
 def contains_only_punctuation(text):

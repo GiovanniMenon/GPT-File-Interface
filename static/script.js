@@ -267,9 +267,12 @@ function change_chat_model(element) {
     
 function clearPage()   {
     /*Clear Page*/
-        if(waiting_chat || waiting_chat_traslate){
+        if((waiting_chat || waiting_chat_traslate) && (side_bar_id === "chat_sidebar" || side_bar_id === "translate_sidebar") ){
+            return
+        }else if (waiting_audio && side_bar_id === "audio_sidebar"){
             return
         }
+
         const input = document.getElementById('button_clear_Page');
         input.blur();
         $("#cont_chat").empty()

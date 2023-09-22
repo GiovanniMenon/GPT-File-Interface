@@ -1,5 +1,5 @@
 
-from app import db
+from src import db
 from flask_login import UserMixin
 from sqlalchemy.dialects.sqlite import JSON
 from sqlalchemy.ext.mutable import MutableList
@@ -8,6 +8,10 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
+
+    # Campi per controllare che un utente non abbia una richiesta gia' in corso.
+    user_elements_token = db.Column(db.Integer, default=0)
+    user_elements_message = db.Column(db.Integer, default=0)
 
     # Campi per controllare che un utente non abbia una richiesta gia' in corso.
     has_chat_request_in_progress = db.Column(db.Boolean, default=False)
